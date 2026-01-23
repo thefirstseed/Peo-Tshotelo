@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Product } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { CATEGORIES } from '../constants';
-import { Filter, Search } from 'lucide-react';
+import { Search, ArrowRight } from 'lucide-react';
 import { fetchProducts } from '../api/api';
+import { navigate } from '../router';
+
 
 export const HomePage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -39,7 +41,7 @@ export const HomePage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
-      <div className="md:hidden mb-6 relative">
+      <div className="md:hidden my-6 relative">
         <input 
           type="text" 
           value={searchQuery}
@@ -50,23 +52,36 @@ export const HomePage: React.FC = () => {
         <Search className="absolute left-3 top-3.5 w-5 h-5 text-neutral-400" />
       </div>
 
-      <div className="mb-8 rounded-2xl bg-primary-800 p-8 md:p-12 text-white relative overflow-hidden shadow-lg">
-        <div className="relative z-10 max-w-xl">
-          <h1 className="text-3xl md:text-5xl font-bold mb-4 tracking-tighter">Find Your Next Favourite Thing</h1>
-          <p className="text-primary-200 mb-6 text-lg">Buy, sell, and discover unique secondhand items from sellers across Botswana.</p>
-          <button className="bg-white text-primary-800 font-semibold px-6 py-2.5 rounded-full hover:bg-neutral-100 transition-transform active:scale-95">
-            Explore Feed
-          </button>
+      <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 my-12 lg:my-20">
+        <div className="lg:w-1/2 text-center lg:text-left">
+          <h1 className="font-heading font-extrabold text-5xl md:text-7xl tracking-tighter text-neutral-900">
+            HERITAGE
+            <br />
+            <span className="text-primary-500">REIMAGINED</span>
+          </h1>
+          <p className="max-w-md mx-auto lg:mx-0 mt-6 text-lg text-neutral-600">
+            The premium destination for curated African vintage, reworked classics, and emerging designers.
+          </p>
+          <div className="mt-8 flex justify-center lg:justify-start items-center gap-4">
+            <button className="bg-primary-500 text-white font-semibold px-8 py-3 rounded-full hover:bg-primary-600 transition-transform active:scale-95 shadow-lg shadow-primary-200">
+              Explore Drops
+            </button>
+            <button className="flex items-center gap-1.5 font-semibold text-neutral-800 hover:text-primary-500 transition">
+              <span>Our Story</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        <div className="absolute -right-16 -bottom-20 h-48 w-48 text-primary-700 opacity-50">
-           <svg fill="currentColor" viewBox="0 0 200 200"><path d="M 50, 150 C 10, 130 10, 30 50, 10 S 90, -10 130, 10 S 190, 30 190, 50 S 170, 90 190, 130 S 150, 190 130, 190 S 90, 210 50, 190 S -10, 170 10, 150 S 50, 150 50, 150 Z"></path></svg>
+        <div className="lg:w-1/2 w-full">
+          <img 
+            src="https://images.unsplash.com/photo-1555529771-835f59fc5efe?q=80&w=1200&auto=format&fit=crop"
+            alt="Clothing on hangers"
+            className="rounded-3xl object-cover w-full h-full aspect-[4/3] lg:aspect-square shadow-2xl shadow-neutral-200"
+          />
         </div>
       </div>
 
       <div className="flex items-center gap-3 overflow-x-auto no-scrollbar mb-8 pb-2">
-        <button className="p-2.5 rounded-full bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-700">
-          <Filter className="w-5 h-5" />
-        </button>
         {CATEGORIES.map(cat => (
           <button
             key={cat}

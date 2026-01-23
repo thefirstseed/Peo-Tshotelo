@@ -64,9 +64,9 @@ export const SellerDashboardPage: React.FC = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" vertical={false} />
                 <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} stroke="#868e96" />
                 <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="#868e96" tickFormatter={(value) => `P${value/1000}k`} />
-                <Tooltip cursor={{fill: 'rgba(241, 243, 245, 0.5)'}} />
+                <Tooltip cursor={{fill: 'rgba(252, 227, 218, 0.5)'}} contentStyle={{backgroundColor: '#fff', border: '1px solid #ebe7e4', borderRadius: '0.5rem'}}/>
                 <Legend iconSize={10} />
-                <Bar dataKey="Sales" fill="#059669" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Sales" fill="#e85d3b" radius={[4, 4, 0, 0]} />
               </BarChart>
            </ResponsiveContainer>
         </div>
@@ -122,7 +122,7 @@ export const SellerDashboardPage: React.FC = () => {
 
 // Sub-components
 const colorVariants = {
-    primary: { bg: 'bg-primary-50', text: 'text-primary-600' },
+    primary: { bg: 'bg-primary-50', text: 'text-primary-700' },
     blue: { bg: 'bg-blue-50', text: 'text-blue-600' },
     orange: { bg: 'bg-orange-50', text: 'text-orange-600' }
 };
@@ -140,7 +140,7 @@ const StatCard = ({ icon: Icon, title, value, color }) => (
 );
 
 const ProductRow = ({ product, onEditClick, onDeleteClick }: { product: Product; onEditClick: () => void; onDeleteClick: () => void }) => (
-  <div className="flex items-center gap-4 p-3 hover:bg-neutral-50 rounded-lg transition-colors">
+  <div className="flex items-center gap-4 p-3 hover:bg-neutral-100 rounded-lg transition-colors">
     <img src={product.imageUrls[0]} alt={product.title} className="w-16 h-16 object-cover rounded-md bg-neutral-100" />
     <div className="flex-1">
       <p className="font-semibold text-neutral-900">{product.title}</p>
@@ -160,10 +160,10 @@ const OrderRow = ({ customer, items, status }) => {
     const statusStyles = {
         New: 'bg-orange-100 text-orange-800',
         Shipped: 'bg-blue-100 text-blue-800',
-        Completed: 'bg-neutral-100 text-neutral-800'
+        Completed: 'bg-neutral-200 text-neutral-800'
     };
     return (
-        <div className="flex items-center justify-between p-3 hover:bg-neutral-50 rounded-lg">
+        <div className="flex items-center justify-between p-3 hover:bg-neutral-100 rounded-lg">
             <div>
                 <p className="font-semibold">{customer}</p>
                 <p className="text-sm text-neutral-500">{items} item(s)</p>

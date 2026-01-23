@@ -109,7 +109,7 @@ export const CartPage: React.FC = () => {
               </div>
               <button 
                 onClick={() => setCheckoutStep('payment')}
-                className="w-full mt-6 bg-primary-600 text-white py-3 rounded-full font-semibold hover:bg-primary-700 transition flex items-center justify-center gap-2"
+                className="w-full mt-6 bg-primary-500 text-white py-3 rounded-full font-semibold hover:bg-primary-600 transition flex items-center justify-center gap-2"
               >
                 Proceed to Checkout
               </button>

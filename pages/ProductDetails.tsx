@@ -111,7 +111,7 @@ export const ProductDetailsPage: React.FC = () => {
           <div className="grid grid-cols-5 gap-3 mb-8">
             <button 
               onClick={() => addToCart(product)}
-              className="col-span-4 bg-primary-600 text-white py-3.5 px-6 rounded-full font-semibold hover:bg-primary-700 transition shadow-lg shadow-primary-200 active:scale-95"
+              className="col-span-4 bg-primary-500 text-white py-3.5 px-6 rounded-full font-semibold hover:bg-primary-600 transition shadow-lg shadow-primary-200 active:scale-95"
             >
               Add to Bag
             </button>
@@ -142,7 +142,7 @@ export const ProductDetailsPage: React.FC = () => {
           {vendor && (
             <div 
               onClick={() => navigate(`/sellers/${vendor.id}`)}
-              className="mt-auto bg-neutral-50 p-4 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-neutral-100 transition border border-neutral-200/80"
+              className="mt-auto bg-neutral-100 p-4 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-neutral-200 transition border border-neutral-200/80"
             >
               <img 
                 src={vendor.imageUrl} 
