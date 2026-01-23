@@ -1,16 +1,20 @@
 import React from 'react';
 import { Product } from '../types';
-import { Star, MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
+import { navigate } from '../router';
 
 interface ProductCardProps {
   product: Product;
-  onClick: (product: Product) => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const handleClick = () => {
+    navigate(`/products/${product.id}`);
+  };
+
   return (
     <div 
-      onClick={() => onClick(product)}
+      onClick={handleClick}
       className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 ease-in-out cursor-pointer flex flex-col h-full hover:-translate-y-1"
     >
       <div className="relative aspect-square overflow-hidden bg-neutral-100">

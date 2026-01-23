@@ -1,34 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Product, Vendor } from '../types';
 import { ArrowLeft, Star, ShieldCheck, Truck, MessageCircle } from 'lucide-react';
-import { MOCK_VENDORS } from '../constants';
+import { fetchProduct, fetchVendor } from '../api/api';
+import { navigate, useParams } from '../router';
+import { useCart } from '../hooks/useCart';
 
-interface ProductDetailsPageProps {
-  product: Product;
-  onBack: () => void;
-  onAddToCart: (product: Product) => void;
-  onVendorClick: (vendor: Vendor) => void;
-}
+export const ProductDetailsPage: React.FC = () => {
+  const { id: productId } = useParams();
+  const { addToCart } = useCart();
+  
+  const [product, setProduct] = useState<Product | null>(null);
+  const [vendor, setVendor] = useState<Vendor | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeImage, setActiveImage] = useState('');
 
-export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({ product, onBack, onAddToCart, onVendorClick }) => {
-  const vendor = MOCK_VENDORS.find(v => v.id === product.vendorId);
-  const [activeImage, setActiveImage] = useState(product.imageUrls[0] || '');
+  useEffect(() => {
+    if (!productId) {
+      setError("Product not found.");
+      setIsLoading(false);
+      return;
+    }
 
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedProduct = await fetchProduct(productId);
+        setProduct(fetchedProduct);
+        setActiveImage(fetchedProduct.imageUrls[0] || '');
+        
+        if (fetchedProduct.vendorId) {
+          const fetchedVendor = await fetchVendor(fetchedProduct.vendorId);
+          setVendor(fetchedVendor);
+        }
+        setError(null);
+      } catch (err) {
+        setError("Failed to load product details.");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [productId]);
+
+  if (isLoading) return <div className="text-center py-20">Loading...</div>;
+  if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
+  if (!product) return <div className="text-center py-20">Product could not be found.</div>;
+  
   return (
     <div className="max-w-7xl mx-auto px-0 md:px-4 lg:px-8 bg-white md:bg-transparent min-h-screen">
       <div className="flex flex-col md:flex-row gap-0 md:gap-8 bg-white md:rounded-2xl overflow-hidden md:shadow-lg md:border border-neutral-200/50 md:mt-4 md:p-6">
         
-        {/* Mobile Header with Back Button */}
         <div className="absolute top-4 left-4 z-10 md:hidden">
           <button 
-            onClick={onBack}
+            onClick={() => navigate('/')}
             className="w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-md hover:bg-white"
           >
             <ArrowLeft className="w-5 h-5 text-neutral-800" />
           </button>
         </div>
 
-        {/* Image Section */}
         <div className="w-full md:w-1/2 lg:w-3/5">
           <div className="bg-neutral-100 aspect-square md:rounded-xl overflow-hidden mb-2">
             <img 
@@ -52,11 +85,10 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({ product,
           )}
         </div>
 
-        {/* Details Section */}
         <div className="p-5 md:p-0 md:w-1/2 lg:w-2/5 flex flex-col">
           
           <div className="hidden md:block mb-4">
-             <button onClick={onBack} className="text-neutral-500 hover:text-neutral-900 flex items-center text-sm font-medium">
+             <button onClick={() => navigate('/')} className="text-neutral-500 hover:text-neutral-900 flex items-center text-sm font-medium">
                <ArrowLeft className="w-4 h-4 mr-1.5" /> Back to browse
              </button>
           </div>
@@ -76,10 +108,9 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({ product,
              )}
           </div>
 
-          {/* Action Buttons */}
           <div className="grid grid-cols-5 gap-3 mb-8">
             <button 
-              onClick={() => onAddToCart(product)}
+              onClick={() => addToCart(product)}
               className="col-span-4 bg-primary-600 text-white py-3.5 px-6 rounded-full font-semibold hover:bg-primary-700 transition shadow-lg shadow-primary-200 active:scale-95"
             >
               Add to Bag
@@ -89,7 +120,6 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({ product,
             </button>
           </div>
 
-          {/* Description */}
           <div className="mb-8 border-t border-neutral-100 pt-6">
             <h3 className="font-semibold text-neutral-900 mb-2">Description</h3>
             <p className="text-neutral-600 leading-relaxed text-sm md:text-base">
@@ -109,10 +139,9 @@ export const ProductDetailsPage: React.FC<ProductDetailsPageProps> = ({ product,
             )}
           </div>
 
-          {/* Vendor Info Card */}
           {vendor && (
             <div 
-              onClick={() => onVendorClick(vendor)}
+              onClick={() => navigate(`/sellers/${vendor.id}`)}
               className="mt-auto bg-neutral-50 p-4 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-neutral-100 transition border border-neutral-200/80"
             >
               <img 

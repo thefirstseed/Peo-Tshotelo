@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
-import { CartItem } from '../types';
 import { Trash2, ArrowLeft, CreditCard, Lock, Smartphone } from 'lucide-react';
+import { useCart } from '../hooks/useCart';
+import { navigate } from '../router';
 
-interface CartPageProps {
-  cartItems: CartItem[];
-  onRemove: (id: string) => void;
-  onUpdateQuantity: (id: string, delta: number) => void;
-  onCheckout: () => void;
-  onBack: () => void;
-}
-
-export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdateQuantity, onCheckout, onBack }) => {
+export const CartPage: React.FC = () => {
+  const { cartItems, removeFromCart, updateCartQuantity, clearCart } = useCart();
   const [checkoutStep, setCheckoutStep] = useState<'cart' | 'payment'>('cart');
   const [processing, setProcessing] = useState(false);
 
@@ -22,9 +16,9 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
     setProcessing(true);
     setTimeout(() => {
       setProcessing(false);
-      onCheckout();
+      clearCart();
       alert('Payment Successful via Mobile Money! Your order has been sent to the seller.');
-      onBack();
+      navigate('/');
     }, 2000);
   };
 
@@ -36,7 +30,7 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
         </div>
         <h2 className="text-xl font-bold text-neutral-900 mb-2">Your Bag is Empty</h2>
         <p className="text-neutral-500 mb-6 text-center">Looks like you haven't found any treasures yet.</p>
-        <button onClick={onBack} className="bg-neutral-900 text-white px-6 py-3 rounded-full font-medium hover:bg-neutral-800">
+        <button onClick={() => navigate('/')} className="bg-neutral-900 text-white px-6 py-3 rounded-full font-medium hover:bg-neutral-800">
           Start Exploring
         </button>
       </div>
@@ -45,9 +39,8 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-      {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={onBack} className="p-2 hover:bg-neutral-100 rounded-full">
+        <button onClick={() => checkoutStep === 'cart' ? navigate('/') : setCheckoutStep('cart')} className="p-2 hover:bg-neutral-100 rounded-full">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-2xl font-bold">
@@ -57,7 +50,6 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
 
       {checkoutStep === 'cart' ? (
         <div className="grid md:grid-cols-3 gap-8">
-          {/* Cart Items List */}
           <div className="md:col-span-2 space-y-4">
             {cartItems.map(item => (
               <div key={item.product.id} className="flex gap-4 bg-white p-4 rounded-xl border border-neutral-200/80 shadow-sm">
@@ -70,7 +62,7 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
                   <div>
                     <div className="flex justify-between items-start">
                       <h3 className="font-semibold text-neutral-900 line-clamp-1">{item.product.title}</h3>
-                      <button onClick={() => onRemove(item.product.id)} className="text-neutral-400 hover:text-red-500 p-1">
+                      <button onClick={() => removeFromCart(item.product.id)} className="text-neutral-400 hover:text-red-500 p-1">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -80,14 +72,14 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
                   
                   <div className="flex items-center gap-3 bg-neutral-100 w-max rounded-lg p-1 mt-2">
                     <button 
-                      onClick={() => onUpdateQuantity(item.product.id, -1)}
+                      onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
                       className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:bg-white rounded"
                     >
                       -
                     </button>
                     <span className="text-sm font-medium w-4 text-center">{item.quantity}</span>
                     <button 
-                      onClick={() => onUpdateQuantity(item.product.id, 1)}
+                      onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
                       className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:bg-white rounded"
                     >
                       +
@@ -98,7 +90,6 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
             ))}
           </div>
 
-          {/* Summary */}
           <div className="md:col-span-1">
             <div className="bg-white p-6 rounded-xl border border-neutral-200/80 shadow-sm sticky top-24">
               <h3 className="font-semibold text-neutral-900 mb-4">Order Summary</h3>
@@ -127,10 +118,8 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
         </div>
       ) : (
         <div className="max-w-md mx-auto">
-          {/* Payment Method Selection */}
           <div className="bg-white p-6 rounded-xl border border-neutral-200/80 shadow-sm mb-6">
             <h3 className="font-semibold text-neutral-900 mb-4">Select Payment Method</h3>
-            
             <div className="space-y-3">
               <label className="flex items-center justify-between p-4 border-2 border-primary-500 bg-primary-50 rounded-lg cursor-pointer">
                 <div className="flex items-center gap-3">
@@ -144,7 +133,6 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
                 </div>
                 <input type="radio" name="payment" defaultChecked className="text-primary-600 focus:ring-primary-500" />
               </label>
-
               <label className="flex items-center justify-between p-4 border border-neutral-200 rounded-lg cursor-pointer opacity-60">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-neutral-100 rounded-full flex items-center justify-center">
@@ -159,8 +147,6 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
               </label>
             </div>
           </div>
-
-          {/* Delivery Address Simplified */}
           <div className="bg-white p-6 rounded-xl border border-neutral-200/80 shadow-sm mb-6">
              <h3 className="font-semibold text-neutral-900 mb-4">Delivery Location</h3>
              <div className="flex gap-2">
@@ -168,7 +154,6 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
                 <button className="bg-neutral-800 text-white px-4 rounded-lg text-sm hover:bg-neutral-900">Use Map</button>
              </div>
           </div>
-
           <button 
             onClick={handlePayment}
             disabled={processing}
@@ -177,7 +162,6 @@ export const CartPage: React.FC<CartPageProps> = ({ cartItems, onRemove, onUpdat
             {processing ? 'Processing...' : `Pay P ${total.toFixed(2)}`}
             {!processing && <Lock className="w-4 h-4" />}
           </button>
-          
           <p className="text-center text-xs text-neutral-500 mt-4 flex items-center justify-center gap-1.5">
             <Lock className="w-3 h-3" /> Secure Payment
           </p>

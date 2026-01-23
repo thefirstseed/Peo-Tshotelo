@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Store, Camera, MapPin, CheckCircle } from 'lucide-react';
+import { navigate } from '../router';
 
-interface VendorOnboardingPageProps {
-  onBack: () => void;
-}
-
-export const VendorOnboardingPage: React.FC<VendorOnboardingPageProps> = ({ onBack }) => {
+export const VendorOnboardingPage: React.FC = () => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     businessName: '',
@@ -21,12 +18,14 @@ export const VendorOnboardingPage: React.FC<VendorOnboardingPageProps> = ({ onBa
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setStep(3); // Success state
+    // Here you would call an API to submit the application
+    console.log("Submitting application:", formData);
+    setStep(3); // Go to success state
   };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <button onClick={onBack} className="flex items-center text-gray-500 hover:text-gray-900 mb-6">
+      <button onClick={() => navigate('/')} className="flex items-center text-gray-500 hover:text-gray-900 mb-6">
         <ArrowLeft className="w-4 h-4 mr-1" /> Back
       </button>
 
@@ -148,7 +147,7 @@ export const VendorOnboardingPage: React.FC<VendorOnboardingPageProps> = ({ onBa
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Received!</h2>
               <p className="text-gray-500 mb-6">We will call you on <b>{formData.phone}</b> within 24 hours to verify your details and complete setup.</p>
-              <button onClick={onBack} className="text-emerald-600 font-medium hover:underline">
+              <button onClick={() => navigate('/')} className="text-emerald-600 font-medium hover:underline">
                  Return to Home
               </button>
            </div>

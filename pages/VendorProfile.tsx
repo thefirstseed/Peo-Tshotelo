@@ -1,21 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Vendor, Product } from '../types';
 import { ArrowLeft, Star, MapPin, BadgeCheck } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
+import { useParams, navigate } from '../router';
+import { fetchVendor, fetchProductsByVendor } from '../api/api';
 
-interface VendorProfilePageProps {
-  vendor: Vendor;
-  products: Product[];
-  onBack: () => void;
-  onProductClick: (product: Product) => void;
-}
+export const VendorProfilePage: React.FC = () => {
+  const { id: vendorId } = useParams();
+  const [vendor, setVendor] = useState<Vendor | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export const VendorProfilePage: React.FC<VendorProfilePageProps> = ({ vendor, products, onBack, onProductClick }) => {
-  const vendorProducts = products; // Products are now pre-filtered and passed as a prop
+  useEffect(() => {
+    if (!vendorId) {
+      setError("Vendor not found.");
+      setIsLoading(false);
+      return;
+    }
+
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const [vendorData, productsData] = await Promise.all([
+          fetchVendor(vendorId),
+          fetchProductsByVendor(vendorId)
+        ]);
+        setVendor(vendorData);
+        setProducts(productsData);
+        setError(null);
+      } catch (err) {
+        setError("Failed to load vendor profile.");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [vendorId]);
+
+  if (isLoading) return <div className="text-center py-20">Loading profile...</div>;
+  if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
+  if (!vendor) return <div className="text-center py-20">Vendor could not be found.</div>;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      {/* Header Image */}
       <div className="h-48 md:h-64 bg-gray-300 w-full relative">
         <img 
           src={`https://picsum.photos/seed/${vendor.id}cover/1200/400`} 
@@ -23,7 +53,7 @@ export const VendorProfilePage: React.FC<VendorProfilePageProps> = ({ vendor, pr
           className="w-full h-full object-cover"
         />
         <button 
-          onClick={onBack}
+          onClick={() => navigate('/')}
           className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full flex items-center justify-center shadow-md hover:bg-white transition"
         >
           <ArrowLeft className="w-5 h-5 text-gray-800" />
@@ -71,19 +101,17 @@ export const VendorProfilePage: React.FC<VendorProfilePageProps> = ({ vendor, pr
           </div>
         </div>
 
-        {/* Products Grid */}
         <div className="mt-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Shop Items ({vendorProducts.length})</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Shop Items ({products.length})</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {vendorProducts.map(product => (
+            {products.map(product => (
               <ProductCard 
                 key={product.id} 
                 product={product} 
-                onClick={onProductClick} 
               />
             ))}
           </div>
-          {vendorProducts.length === 0 && (
+          {products.length === 0 && (
             <p className="text-gray-500 italic">No products currently listed.</p>
           )}
         </div>

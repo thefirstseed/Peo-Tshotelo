@@ -28,12 +28,15 @@ export interface CartItem {
   quantity: number;
 }
 
-// Simple routing types
-export type ViewState = 
-  | { type: 'HOME' }
-  | { type: 'PRODUCT_DETAILS'; data: Product }
-  | { type: 'VENDOR_PROFILE'; data: Vendor }
-  | { type: 'CART' }
-  | { type: 'VENDOR_ONBOARDING' }
-  | { type: 'SELLER_DASHBOARD' }
-  | { type: 'PRODUCT_EDIT'; data?: Product }; // data is optional for new products
+// Represents the currently logged-in user
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'buyer' | 'seller';
+  vendorId?: string; // Only if role is 'seller'
+}
+
+// ViewState is no longer needed for routing, but might be useful for other UI states.
+// For now, it's removed to reflect the new routing architecture.
+// export type ViewState = ...

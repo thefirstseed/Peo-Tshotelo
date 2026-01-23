@@ -1,26 +1,31 @@
 import React from 'react';
-import { ShoppingBag, Search, PlusCircle, LayoutDashboard } from 'lucide-react';
+import { ShoppingBag, Search, PlusCircle, LayoutDashboard, LogIn, LogOut } from 'lucide-react';
+import { useCart } from '../hooks/useCart';
+import { useAuth } from '../hooks/useAuth';
+import { navigate } from '../router';
 
-interface NavbarProps {
-  cartCount: number;
-  userRole: 'buyer' | 'seller';
-  onCartClick: () => void;
-  onLogoClick: () => void;
-  onSellOrDashboardClick: () => void;
-}
+export const Navbar: React.FC = () => {
+  const { cartItems } = useCart();
+  const { user, logout } = useAuth();
+  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
-export const Navbar: React.FC<NavbarProps> = ({ cartCount, userRole, onCartClick, onLogoClick, onSellOrDashboardClick }) => {
+  const handleSellOrDashboardClick = () => {
+    if (user?.role === 'seller') {
+      navigate('/dashboard');
+    } else {
+      navigate('/sell');
+    }
+  };
+
   return (
     <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-neutral-200 z-50 h-16">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
         
-        {/* Logo */}
-        <div className="flex items-center gap-2 cursor-pointer" onClick={onLogoClick}>
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
           <div className="w-8 h-8 bg-primary-900 rounded-full flex items-center justify-center text-white font-bold text-sm">KK</div>
           <span className="text-xl font-bold tracking-tight text-neutral-900">Kulture Kloze</span>
         </div>
 
-        {/* Desktop Search - Hidden on mobile */}
         <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
           <input 
             type="text" 
@@ -30,28 +35,46 @@ export const Navbar: React.FC<NavbarProps> = ({ cartCount, userRole, onCartClick
           <Search className="absolute left-3 top-2.5 w-5 h-5 text-neutral-500" />
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-4">
-          {userRole === 'seller' ? (
-            <button 
-              onClick={onSellOrDashboardClick}
-              className="hidden md:flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-primary-600 transition"
-            >
-              <LayoutDashboard className="w-5 h-5" />
-              <span>Dashboard</span>
-            </button>
+          {user ? (
+            <>
+              {user.role === 'seller' ? (
+                <button 
+                  onClick={handleSellOrDashboardClick}
+                  className="hidden md:flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-primary-600 transition"
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                  <span>Dashboard</span>
+                </button>
+              ) : (
+                <button 
+                  onClick={handleSellOrDashboardClick}
+                  className="hidden md:flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-primary-600 transition"
+                >
+                  <PlusCircle className="w-5 h-5" />
+                  <span>Sell</span>
+                </button>
+              )}
+               <button 
+                  onClick={logout}
+                  className="hidden md:flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-primary-600 transition"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span>Logout</span>
+                </button>
+            </>
           ) : (
-            <button 
-              onClick={onSellOrDashboardClick}
-              className="hidden md:flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-primary-600 transition"
-            >
-              <PlusCircle className="w-5 h-5" />
-              <span>Sell</span>
-            </button>
+             <button 
+                onClick={() => navigate('/login')}
+                className="hidden md:flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-primary-600 transition"
+              >
+                <LogIn className="w-5 h-5" />
+                <span>Login</span>
+              </button>
           )}
 
           <button 
-            onClick={onCartClick} 
+            onClick={() => navigate('/cart')} 
             className="relative p-2 hover:bg-neutral-100 rounded-full transition"
           >
             <ShoppingBag className="w-6 h-6 text-neutral-800" />

@@ -1,18 +1,33 @@
-import React, { useState } from 'react';
-import { Product, Vendor } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Product } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { CATEGORIES } from '../constants';
 import { Filter, Search } from 'lucide-react';
+import { fetchProducts } from '../api/api';
 
-interface HomePageProps {
-  products: Product[];
-  onProductClick: (product: Product) => void;
-  onVendorClick: (vendor: Vendor) => void;
-}
-
-export const HomePage: React.FC<HomePageProps> = ({ products, onProductClick }) => {
+export const HomePage: React.FC = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedProducts = await fetchProducts();
+        setProducts(fetchedProducts);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch products. Please try again later.');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadProducts();
+  }, []);
 
   const filteredProducts = products.filter(product => {
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
@@ -24,7 +39,6 @@ export const HomePage: React.FC<HomePageProps> = ({ products, onProductClick }) 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
-      {/* Mobile Search - Visible only on mobile */}
       <div className="md:hidden mb-6 relative">
         <input 
           type="text" 
@@ -36,7 +50,6 @@ export const HomePage: React.FC<HomePageProps> = ({ products, onProductClick }) 
         <Search className="absolute left-3 top-3.5 w-5 h-5 text-neutral-400" />
       </div>
 
-      {/* Hero / Banner Area */}
       <div className="mb-8 rounded-2xl bg-primary-800 p-8 md:p-12 text-white relative overflow-hidden shadow-lg">
         <div className="relative z-10 max-w-xl">
           <h1 className="text-3xl md:text-5xl font-bold mb-4 tracking-tighter">Find Your Next Favourite Thing</h1>
@@ -50,7 +63,6 @@ export const HomePage: React.FC<HomePageProps> = ({ products, onProductClick }) 
         </div>
       </div>
 
-      {/* Categories */}
       <div className="flex items-center gap-3 overflow-x-auto no-scrollbar mb-8 pb-2">
         <button className="p-2.5 rounded-full bg-white border border-neutral-200 hover:bg-neutral-100 text-neutral-700">
           <Filter className="w-5 h-5" />
@@ -70,16 +82,18 @@ export const HomePage: React.FC<HomePageProps> = ({ products, onProductClick }) 
         ))}
       </div>
 
-      {/* Feed */}
       <div className="mb-4">
         <h2 className="text-2xl font-bold text-neutral-900 mb-4 tracking-tight">Fresh Finds</h2>
-        {filteredProducts.length > 0 ? (
+        {isLoading ? (
+           <div className="text-center py-20">Loading products...</div>
+        ) : error ? (
+           <div className="text-center py-20 text-red-500">{error}</div>
+        ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {filteredProducts.map(product => (
               <ProductCard 
                 key={product.id} 
                 product={product} 
-                onClick={onProductClick} 
               />
             ))}
           </div>
