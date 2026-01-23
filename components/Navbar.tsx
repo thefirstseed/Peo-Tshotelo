@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Search, PlusCircle, LayoutDashboard, LogIn, LogOut, User } from 'lucide-react';
+import { ShoppingBag, Search, PlusCircle, LayoutDashboard, LogIn, LogOut } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { navigate } from '../router';
@@ -22,63 +22,60 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
         
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="w-8 h-8 bg-[#E85D3B] rounded-md flex items-center justify-center text-white font-bold text-lg font-heading">K</div>
+          <div className="w-8 h-8 bg-primary-900 rounded-full flex items-center justify-center text-white font-bold text-sm">KK</div>
           <span className="text-xl font-bold tracking-tight text-neutral-900">Kulture Kloze</span>
         </div>
 
-        <div className="hidden md:flex flex-1 max-w-sm mx-8 relative">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <Search className="w-5 h-5 text-neutral-400" />
-          </div>
+        <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
           <input 
             type="text" 
-            placeholder="Search heritage..." 
-            className="w-full pl-10 pr-4 py-2 bg-neutral-100 border border-transparent rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            placeholder="Search for items, sellers..." 
+            className="w-full pl-10 pr-4 py-2 bg-neutral-100 border border-transparent rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           />
+          <Search className="absolute left-3 top-2.5 w-5 h-5 text-neutral-500" />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           {user ? (
             <>
               {user.role === 'seller' ? (
                 <button 
                   onClick={handleSellOrDashboardClick}
-                  className="p-2 hover:bg-neutral-100 rounded-full transition"
-                  aria-label="Dashboard"
+                  className="hidden md:flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-primary-600 transition"
                 >
-                  <LayoutDashboard className="w-6 h-6 text-neutral-800" />
+                  <LayoutDashboard className="w-5 h-5" />
+                  <span>Dashboard</span>
                 </button>
               ) : (
                 <button 
                   onClick={handleSellOrDashboardClick}
-                  className="p-2 hover:bg-neutral-100 rounded-full transition"
-                  aria-label="Sell"
+                  className="hidden md:flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-primary-600 transition"
                 >
-                  <PlusCircle className="w-6 h-6 text-neutral-800" />
+                  <PlusCircle className="w-5 h-5" />
+                  <span>Sell</span>
                 </button>
               )}
                <button 
                   onClick={logout}
-                  className="p-2 hover:bg-neutral-100 rounded-full transition"
-                  aria-label="Logout"
+                  className="hidden md:flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-primary-600 transition"
                 >
-                  <LogOut className="w-6 h-6 text-neutral-800" />
+                  <LogOut className="w-5 h-5" />
+                  <span>Logout</span>
                 </button>
             </>
           ) : (
              <button 
                 onClick={() => navigate('/login')}
-                className="p-2 hover:bg-neutral-100 rounded-full transition"
-                aria-label="Login"
+                className="hidden md:flex items-center gap-1.5 text-sm font-medium text-neutral-700 hover:text-primary-600 transition"
               >
-                <User className="w-6 h-6 text-neutral-800" />
+                <LogIn className="w-5 h-5" />
+                <span>Login</span>
               </button>
           )}
 
           <button 
             onClick={() => navigate('/cart')} 
             className="relative p-2 hover:bg-neutral-100 rounded-full transition"
-            aria-label="Shopping cart"
           >
             <ShoppingBag className="w-6 h-6 text-neutral-800" />
             {cartCount > 0 && (

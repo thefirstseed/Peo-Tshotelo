@@ -18,7 +18,7 @@ export default function App() {
   const { user } = useAuth();
   
   return (
-    <div className="min-h-screen bg-neutral-100 flex flex-col font-sans text-neutral-800">
+    <div className="min-h-screen bg-neutral-50 flex flex-col font-sans text-neutral-800">
       <Navbar />
       <main className="flex-grow pt-16 pb-20 md:pb-8">
         <Router>
