@@ -23,13 +23,8 @@ export default function App() {
       <main className="flex-grow pt-16 pb-20 md:pb-8">
         <Router>
           <Route path="/" component={HomePage} />
-          <Route path="/products/:id" component={ProductDetailsPage} />
-          <Route path="/sellers/:id" component={VendorProfilePage} />
-          <Route path="/cart" component={CartPage} />
-          <Route path="/login" component={LoginPage} />
-          <Route path="/sell" component={user?.role === 'seller' ? SellerDashboardPage : VendorOnboardingPage} />
           
-          {/* Protected Seller Routes */}
+          {/* Protected Seller Routes (Must be before :id routes to avoid conflicts) */}
           <Route path="/dashboard" component={() => (
             <ProtectedRoute roles={['seller']}>
               <SellerDashboardPage />
@@ -45,6 +40,13 @@ export default function App() {
               <ProductEditPage />
             </ProtectedRoute>
           )} />
+
+          <Route path="/products/:id" component={ProductDetailsPage} />
+          <Route path="/sellers/:id" component={VendorProfilePage} />
+          <Route path="/cart" component={CartPage} />
+          <Route path="/login" component={LoginPage} />
+          <Route path="/sell" component={user?.role === 'seller' ? SellerDashboardPage : VendorOnboardingPage} />
+          
           
           {/* Fallback for unknown routes */}
           <Route default component={() => <div className="text-center py-10">404 - Page Not Found</div>} />

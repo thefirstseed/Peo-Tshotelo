@@ -21,9 +21,17 @@ export const HomePage: React.FC = () => {
         const fetchedProducts = await fetchProducts();
         setProducts(fetchedProducts);
         setError(null);
-      } catch (err) {
-        setError('Failed to fetch products. Please try again later.');
-        console.error(err);
+      } catch (err: any) {
+        console.error('Fetch error:', err);
+        // Fallback to empty list if DB is unreachable or empty
+        if (err.message && (err.message.includes('fetch') || err.message.includes('JSON'))) {
+             setError('Connection error. Please check your network.');
+        } else {
+            // Supabase returns null data instead of throwing for empty queries usually, 
+            // but if the table doesn't exist or RLS blocks it, we get an error.
+            // For now, let's treat empty results gracefully.
+            setProducts([]);
+        }
       } finally {
         setIsLoading(false);
       }

@@ -1,103 +1,155 @@
 import { Product, Vendor, User } from '../types';
-import { MOCK_PRODUCTS, MOCK_VENDORS } from '../constants';
-
-// --- API Simulation ---
-// This simulates a database or a remote API endpoint.
-let productsDB: Product[] = [...MOCK_PRODUCTS];
-const vendorsDB: Vendor[] = [...MOCK_VENDORS];
-
-const simulateDelay = (delay = 500) => new Promise(res => setTimeout(res, delay));
+import { supabase } from '../src/lib/supabase';
 
 // --- Auth API ---
+// Login is now handled directly in AuthContext or via supabase.auth
 export const login = async (email: string, password: string): Promise<User> => {
-  await simulateDelay();
-  // In a real backend, you'd query a user database and check a hashed password.
-  if (email === 'seller@kulture.com' && password === 'password') {
-    return {
-      id: 'user1',
-      name: 'Thrifty Gabs',
-      email: 'seller@kulture.com',
-      role: 'seller',
-      vendorId: 'v1'
-    };
-  }
-  if (email === 'buyer@kulture.com' && password === 'password') {
-    return {
-      id: 'user2',
-      name: 'Pula Buyer',
-      email: 'buyer@kulture.com',
-      role: 'buyer'
-    };
-  }
-  throw new Error('Invalid credentials');
+  // Legacy support or direct usage if needed, but AuthContext uses supabase.auth directly now.
+  // For compatibility with existing components calling api.login, we can wrap it.
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  if (!data.user) throw new Error("No user returned");
+
+  // We need to fetch the profile to return a User object, but ideally components should wait for AuthContext to update.
+  // This function signature returns a Promise<User>, so we simulate it.
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
+
+  return {
+    id: data.user.id,
+    email: data.user.email!,
+    name: profile?.full_name || data.user.email!.split('@')[0],
+    role: profile?.role || 'buyer'
+  };
 };
 
 // --- Product API ---
 export const fetchProducts = async (): Promise<Product[]> => {
-  await simulateDelay();
-  return [...productsDB];
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, vendors(name)')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.warn("Supabase fetch error:", error);
+    return []; // Return empty array on error to prevent app crash
+  }
+
+  return (data || []).map((p: any) => ({
+    ...p,
+    vendorName: p.vendors?.name,
+    imageUrls: p.image_urls || [],
+    sizes: p.sizes || []
+  }));
 };
 
 export const fetchProduct = async (id: string): Promise<Product> => {
-  await simulateDelay();
-  const product = productsDB.find(p => p.id === id);
-  if (product) {
-    return { ...product };
-  }
-  throw new Error('Product not found');
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, vendors(name)')
+    .eq('id', id)
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  return {
+    ...data,
+    vendorName: data.vendors?.name,
+    imageUrls: data.image_urls || [],
+    sizes: data.sizes || []
+  };
 };
 
 export const fetchProductsByVendor = async (vendorId: string): Promise<Product[]> => {
-  await simulateDelay();
-  return productsDB.filter(p => p.vendorId === vendorId);
+  const { data, error } = await supabase
+    .from('products')
+    .select('*, vendors(name)')
+    .eq('vendor_id', vendorId);
+
+  if (error) throw new Error(error.message);
+
+  return data.map((p: any) => ({
+    ...p,
+    vendorName: p.vendors?.name,
+    imageUrls: p.image_urls || [],
+    sizes: p.sizes || []
+  }));
 };
 
 export const createOrUpdateProduct = async (
   productData: Omit<Product, 'id' | 'vendorId' | 'vendorName'>,
   existingId?: string
 ): Promise<Product> => {
-  await simulateDelay(1000);
-  const loggedInVendor = vendorsDB.find(v => v.id === 'v1'); // Simulate logged in seller
-  if (!loggedInVendor) throw new Error("Authentication error");
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
 
+  // Get vendor for this user
+  const { data: vendor } = await supabase
+    .from('vendors')
+    .select('id, name')
+    .eq('owner_id', user.id)
+    .single();
+
+  if (!vendor) throw new Error("No vendor profile found");
+
+  const payload = {
+    title: productData.title,
+    description: productData.description,
+    price: productData.price,
+    category: productData.category,
+    condition: productData.condition,
+    sizes: productData.sizes,
+    image_urls: productData.imageUrls,
+    vendor_id: vendor.id
+  };
+
+  let result;
   if (existingId) {
-    // Update
-    const productIndex = productsDB.findIndex(p => p.id === existingId);
-    if (productIndex === -1) throw new Error("Product to update not found");
-    const updatedProduct = { ...productsDB[productIndex], ...productData };
-    productsDB[productIndex] = updatedProduct;
-    return updatedProduct;
+    const { data, error } = await supabase
+      .from('products')
+      .update(payload)
+      .eq('id', existingId)
+      .select()
+      .single();
+    if (error) throw error;
+    result = data;
   } else {
-    // Create
-    const newProduct: Product = {
-      ...productData,
-      id: `p${Date.now()}`,
-      vendorId: loggedInVendor.id,
-      vendorName: loggedInVendor.name
-    };
-    productsDB = [newProduct, ...productsDB];
-    return newProduct;
+    const { data, error } = await supabase
+      .from('products')
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw error;
+    result = data;
   }
+
+  return {
+    ...result,
+    vendorName: vendor.name,
+    imageUrls: result.image_urls,
+    sizes: result.sizes
+  };
 };
 
 export const deleteProduct = async (productId: string): Promise<void> => {
-    await simulateDelay(800);
-    const initialLength = productsDB.length;
-    productsDB = productsDB.filter(p => p.id !== productId);
-    if (productsDB.length === initialLength) {
-        throw new Error("Product not found for deletion.");
-    }
-    // In a real API, you'd return a 204 No Content status.
-    return;
+  const { error } = await supabase.from('products').delete().eq('id', productId);
+  if (error) throw error;
 };
 
 
 // --- Vendor API ---
 export const fetchVendor = async (id: string): Promise<Vendor> => {
-  await simulateDelay();
-  const vendor = vendorsDB.find(v => v.id === id);
-  if (vendor) {
-    return { ...vendor };
-  }
-  throw new Error('Vendor not found');
+  const { data, error } = await supabase
+    .from('vendors')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  return {
+    ...data,
+    imageUrl: data.image_url,
+    reviewCount: data.review_count,
+    joinedDate: data.joined_date
+  };
 };

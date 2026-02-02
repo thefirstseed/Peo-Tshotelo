@@ -19,7 +19,8 @@ export const ProductEditPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (productId) {
+    // If productId is 'new' or undefined, we are creating a product.
+    if (productId && productId !== 'new') {
       setIsLoading(true);
       fetchProduct(productId)
         .then(product => {
@@ -63,7 +64,8 @@ export const ProductEditPage: React.FC = () => {
     }
 
     try {
-      await createOrUpdateProduct({ ...formData, imageUrls: finalImageUrls }, productId);
+      const isNew = !productId || productId === 'new';
+      await createOrUpdateProduct({ ...formData, imageUrls: finalImageUrls }, isNew ? undefined : productId);
       navigate('/dashboard');
     } catch (err) {
       alert("Failed to save product.");
