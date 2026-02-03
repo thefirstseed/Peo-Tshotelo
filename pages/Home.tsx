@@ -1,65 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { Product } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Product, Vendor } from '../types';
 import { ProductCard } from '../components/ProductCard';
-import { CATEGORIES } from '../constants';
+import { VendorCard } from '../components/VendorCard';
+import { CATEGORIES, MOCK_VENDORS } from '../constants';
 import { Search, ArrowRight } from 'lucide-react';
 import { fetchProducts } from '../api/api';
-import { navigate } from '../router';
-
+import { navigate, useQuery } from '../router';
 
 export const HomePage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  
+  const query = useQuery();
+  const searchQuery = query.get('q') || '';
 
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadData = async () => {
       try {
         setIsLoading(true);
+        // In a real app, you might fetch vendors too, but we'll use the mock constant for now.
+        // TODO Backend: Replace MOCK_PRODUCTS with GET /api/products?search=...&category=...
         const fetchedProducts = await fetchProducts();
         setProducts(fetchedProducts);
+        setVendors(MOCK_VENDORS);
         setError(null);
-      } catch (err: any) {
-        console.error('Fetch error:', err);
-        // Fallback to empty list if DB is unreachable or empty
-        if (err.message && (err.message.includes('fetch') || err.message.includes('JSON'))) {
-             setError('Connection error. Please check your network.');
-        } else {
-            // Supabase returns null data instead of throwing for empty queries usually, 
-            // but if the table doesn't exist or RLS blocks it, we get an error.
-            // For now, let's treat empty results gracefully.
-            setProducts([]);
-        }
+      } catch (err) {
+        setError('Failed to fetch data. Please try again later.');
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
-    loadProducts();
+    loadData();
   }, []);
 
-  const filteredProducts = products.filter(product => {
-    const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-    const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          product.vendorName.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+      const matchesSearch = searchQuery 
+        ? product.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          product.vendorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.description.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
+      return matchesCategory && matchesSearch;
+    });
+  }, [products, selectedCategory, searchQuery]);
+  
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
-      <div className="md:hidden my-6 relative">
-        <input 
-          type="text" 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search items..." 
-          className="w-full pl-10 pr-4 py-3 bg-white border border-neutral-300 rounded-xl text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-        />
-        <Search className="absolute left-3 top-3.5 w-5 h-5 text-neutral-400" />
-      </div>
-
+      {/* Hero Section */}
       <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 my-12 lg:my-20">
         <div className="lg:w-1/2 text-center lg:text-left">
           <h1 className="font-heading font-extrabold text-5xl md:text-7xl tracking-tighter text-neutral-900">
@@ -89,6 +82,7 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
+      {/* Category Pills */}
       <div className="flex items-center gap-3 overflow-x-auto no-scrollbar mb-8 pb-2">
         {CATEGORIES.map(cat => (
           <button
@@ -105,7 +99,8 @@ export const HomePage: React.FC = () => {
         ))}
       </div>
 
-      <div className="mb-4">
+      {/* Product Grid */}
+      <div className="mb-16">
         <h2 className="text-2xl font-bold text-neutral-900 mb-4 tracking-tight">Fresh Finds</h2>
         {isLoading ? (
            <div className="text-center py-20">Loading products...</div>
@@ -124,13 +119,26 @@ export const HomePage: React.FC = () => {
           <div className="text-center py-20 text-neutral-600 bg-white rounded-xl">
             <p className="font-medium">No products found matching your criteria.</p>
             <button 
-              onClick={() => {setSelectedCategory('All'); setSearchQuery('');}}
+              onClick={() => {
+                setSelectedCategory('All'); 
+                navigate('/');
+              }}
               className="mt-4 text-primary-600 font-semibold hover:underline text-sm"
             >
               Clear filters
             </button>
           </div>
         )}
+      </div>
+
+      {/* Vendor Carousel */}
+      <div className="mb-16">
+        <h2 className="text-2xl font-bold text-neutral-900 mb-4 tracking-tight">Featured Shops</h2>
+        <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-4">
+          {vendors.map(vendor => (
+            <VendorCard key={vendor.id} vendor={vendor} />
+          ))}
+        </div>
       </div>
     </div>
   );

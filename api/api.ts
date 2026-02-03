@@ -1,155 +1,125 @@
 import { Product, Vendor, User } from '../types';
-import { supabase } from '../src/lib/supabase';
+import { MOCK_PRODUCTS, MOCK_VENDORS } from '../constants';
+
+// --- API Simulation ---
+// This simulates a database or a remote API endpoint.
+let productsDB: Product[] = [...MOCK_PRODUCTS];
+const vendorsDB: Vendor[] = [...MOCK_VENDORS];
+let usersDB: User[] = [
+  { id: 'user1', name: 'Thrifty Gabs', email: 'seller@kulture.com', role: 'seller', vendorId: 'v1' },
+  { id: 'user2', name: 'Pula Buyer', email: 'buyer@kulture.com', role: 'buyer' },
+];
+
+const simulateDelay = (delay = 500) => new Promise(res => setTimeout(res, delay));
 
 // --- Auth API ---
-// Login is now handled directly in AuthContext or via supabase.auth
 export const login = async (email: string, password: string): Promise<User> => {
-  // Legacy support or direct usage if needed, but AuthContext uses supabase.auth directly now.
-  // For compatibility with existing components calling api.login, we can wrap it.
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  if (!data.user) throw new Error("No user returned");
-
-  // We need to fetch the profile to return a User object, but ideally components should wait for AuthContext to update.
-  // This function signature returns a Promise<User>, so we simulate it.
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
-
-  return {
-    id: data.user.id,
-    email: data.user.email!,
-    name: profile?.full_name || data.user.email!.split('@')[0],
-    role: profile?.role || 'buyer'
-  };
+  await simulateDelay();
+  // In a real backend, you'd query a user database and check a hashed password.
+  const user = usersDB.find(u => u.email.toLowerCase() === email.toLowerCase());
+  if (user) {
+    // We're not checking password for this mock API
+    return user;
+  }
+  throw new Error('Invalid credentials');
 };
+
+export const register = async (name: string, email: string, password: string): Promise<User> => {
+    await simulateDelay();
+    const existingUser = usersDB.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (existingUser) {
+        throw new Error('An account with this email already exists.');
+    }
+    const newUser: User = {
+        id: `user${Date.now()}`,
+        name,
+        email,
+        role: 'buyer'
+    };
+    usersDB.push(newUser);
+    return newUser;
+};
+
 
 // --- Product API ---
 export const fetchProducts = async (): Promise<Product[]> => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*, vendors(name)')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.warn("Supabase fetch error:", error);
-    return []; // Return empty array on error to prevent app crash
-  }
-
-  return (data || []).map((p: any) => ({
-    ...p,
-    vendorName: p.vendors?.name,
-    imageUrls: p.image_urls || [],
-    sizes: p.sizes || []
-  }));
+  await simulateDelay();
+  return [...productsDB];
 };
 
 export const fetchProduct = async (id: string): Promise<Product> => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*, vendors(name)')
-    .eq('id', id)
-    .single();
-
-  if (error) throw new Error(error.message);
-
-  return {
-    ...data,
-    vendorName: data.vendors?.name,
-    imageUrls: data.image_urls || [],
-    sizes: data.sizes || []
-  };
+  await simulateDelay();
+  const product = productsDB.find(p => p.id === id);
+  if (product) {
+    return { ...product };
+  }
+  throw new Error('Product not found');
 };
 
 export const fetchProductsByVendor = async (vendorId: string): Promise<Product[]> => {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*, vendors(name)')
-    .eq('vendor_id', vendorId);
-
-  if (error) throw new Error(error.message);
-
-  return data.map((p: any) => ({
-    ...p,
-    vendorName: p.vendors?.name,
-    imageUrls: p.image_urls || [],
-    sizes: p.sizes || []
-  }));
+  await simulateDelay();
+  return productsDB.filter(p => p.vendorId === vendorId);
 };
 
 export const createOrUpdateProduct = async (
   productData: Omit<Product, 'id' | 'vendorId' | 'vendorName'>,
+  newImages: File[], // In a real API, this would be part of a multipart/form-data
   existingId?: string
 ): Promise<Product> => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
+  await simulateDelay(1000);
+  // TODO Backend: Replace this hardcoded find with the user from the verified JWT.
+  // The server-side auth middleware should attach the user object (containing vendorId) to the request.
+  const loggedInVendor = vendorsDB.find(v => v.id === 'v1'); // Simulate logged in seller
+  if (!loggedInVendor) throw new Error("Authentication error");
 
-  // Get vendor for this user
-  const { data: vendor } = await supabase
-    .from('vendors')
-    .select('id, name')
-    .eq('owner_id', user.id)
-    .single();
+  // Simulate image upload by creating blob URLs
+  const uploadedImageUrls = newImages.map(file => URL.createObjectURL(file));
+  const allImageUrls = [...productData.imageUrls, ...uploadedImageUrls];
 
-  if (!vendor) throw new Error("No vendor profile found");
-
-  const payload = {
-    title: productData.title,
-    description: productData.description,
-    price: productData.price,
-    category: productData.category,
-    condition: productData.condition,
-    sizes: productData.sizes,
-    image_urls: productData.imageUrls,
-    vendor_id: vendor.id
-  };
-
-  let result;
   if (existingId) {
-    const { data, error } = await supabase
-      .from('products')
-      .update(payload)
-      .eq('id', existingId)
-      .select()
-      .single();
-    if (error) throw error;
-    result = data;
+    // Update
+    const productIndex = productsDB.findIndex(p => p.id === existingId && p.vendorId === loggedInVendor.id);
+    if (productIndex === -1) throw new Error("Product to update not found or permission denied");
+    
+    const updatedProduct: Product = { 
+      ...productsDB[productIndex], 
+      ...productData,
+      imageUrls: allImageUrls
+    };
+    productsDB[productIndex] = updatedProduct;
+    return updatedProduct;
   } else {
-    const { data, error } = await supabase
-      .from('products')
-      .insert(payload)
-      .select()
-      .single();
-    if (error) throw error;
-    result = data;
+    // Create
+    const newProduct: Product = {
+      ...productData,
+      id: `p${Date.now()}`,
+      vendorId: loggedInVendor.id,
+      vendorName: loggedInVendor.name,
+      imageUrls: allImageUrls,
+    };
+    productsDB = [newProduct, ...productsDB];
+    return newProduct;
   }
-
-  return {
-    ...result,
-    vendorName: vendor.name,
-    imageUrls: result.image_urls,
-    sizes: result.sizes
-  };
 };
 
 export const deleteProduct = async (productId: string): Promise<void> => {
-  const { error } = await supabase.from('products').delete().eq('id', productId);
-  if (error) throw error;
+    await simulateDelay(800);
+    const initialLength = productsDB.length;
+    productsDB = productsDB.filter(p => p.id !== productId);
+    if (productsDB.length === initialLength) {
+        throw new Error("Product not found for deletion.");
+    }
+    // In a real API, you'd return a 204 No Content status.
+    return;
 };
 
 
 // --- Vendor API ---
 export const fetchVendor = async (id: string): Promise<Vendor> => {
-  const { data, error } = await supabase
-    .from('vendors')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error) throw new Error(error.message);
-
-  return {
-    ...data,
-    imageUrl: data.image_url,
-    reviewCount: data.review_count,
-    joinedDate: data.joined_date
-  };
+  await simulateDelay();
+  const vendor = vendorsDB.find(v => v.id === id);
+  if (vendor) {
+    return { ...vendor };
+  }
+  throw new Error('Vendor not found');
 };

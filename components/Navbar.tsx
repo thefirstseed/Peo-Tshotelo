@@ -1,13 +1,14 @@
-import React from 'react';
-import { ShoppingBag, Search, PlusCircle, LayoutDashboard, LogIn, LogOut, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShoppingBag, Search, Menu, X } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { navigate } from '../router';
 
 export const Navbar: React.FC = () => {
-  const { cartItems } = useCart();
+  const { totalItems } = useCart();
   const { user, logout } = useAuth();
-  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSellOrDashboardClick = () => {
     if (user?.role === 'seller') {
@@ -15,80 +16,144 @@ export const Navbar: React.FC = () => {
     } else {
       navigate('/sell');
     }
+    setIsMenuOpen(false); // Close menu on navigation
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate('/');
+    }
+    setIsMenuOpen(false);
+    setSearchQuery('');
+  };
+
+  const handleNavLinkClick = (path: string) => {
+    navigate(path);
+    setIsMenuOpen(false);
+  };
+  
+  const NavLink: React.FC<{children: React.ReactNode; onClick: () => void; className?: string}> = ({ children, onClick, className = '' }) => (
+    <button
+      onClick={onClick}
+      className={`text-neutral-600 hover:text-primary-600 transition-colors ${className}`}
+    >
+      {children}
+    </button>
+  );
+
   return (
-    <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-neutral-200 z-50 h-16">
-      <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-        
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="w-8 h-8 bg-[#E85D3B] rounded-md flex items-center justify-center text-white font-bold text-lg font-heading">K</div>
-          <span className="text-xl font-bold tracking-tight text-neutral-900">Kulture Kloze</span>
-        </div>
-
-        <div className="hidden md:flex flex-1 max-w-sm mx-8 relative">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <Search className="w-5 h-5 text-neutral-400" />
+    <>
+      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-neutral-200 z-50 h-16">
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+          
+          {/* Logo and Brand Name */}
+          <div className="flex items-center gap-2 cursor-pointer flex-shrink-0" onClick={() => handleNavLinkClick('/')}>
+            <div className="w-8 h-8 bg-[#E85D3B] rounded-md flex items-center justify-center text-white font-bold text-lg font-heading">K</div>
+            <span className="text-xl font-bold tracking-tight text-neutral-900">Kulture Kloze</span>
           </div>
-          <input 
-            type="text" 
-            placeholder="Search heritage..." 
-            className="w-full pl-10 pr-4 py-2 bg-neutral-100 border border-transparent rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          />
-        </div>
 
-        <div className="flex items-center gap-2">
-          {user ? (
-            <>
-              {user.role === 'seller' ? (
-                <button 
-                  onClick={handleSellOrDashboardClick}
-                  className="p-2 hover:bg-neutral-100 rounded-full transition"
-                  aria-label="Dashboard"
-                >
-                  <LayoutDashboard className="w-6 h-6 text-neutral-800" />
-                </button>
-              ) : (
-                <button 
-                  onClick={handleSellOrDashboardClick}
-                  className="p-2 hover:bg-neutral-100 rounded-full transition"
-                  aria-label="Sell"
-                >
-                  <PlusCircle className="w-6 h-6 text-neutral-800" />
-                </button>
-              )}
-               <button 
-                  onClick={logout}
-                  className="p-2 hover:bg-neutral-100 rounded-full transition"
-                  aria-label="Logout"
-                >
-                  <LogOut className="w-6 h-6 text-neutral-800" />
-                </button>
-            </>
-          ) : (
-             <button 
-                onClick={() => navigate('/login')}
-                className="p-2 hover:bg-neutral-100 rounded-full transition"
-                aria-label="Login"
-              >
-                <User className="w-6 h-6 text-neutral-800" />
-              </button>
-          )}
+          {/* Centered Navigation Links (Desktop) */}
+          <div className="hidden md:flex items-center justify-center flex-1 gap-6 text-sm font-medium">
+            <NavLink onClick={() => handleNavLinkClick('/')}>Browse</NavLink>
+            <NavLink onClick={handleSellOrDashboardClick}>{user?.role === 'seller' ? 'Dashboard' : 'Sell'}</NavLink>
+          </div>
 
-          <button 
-            onClick={() => navigate('/cart')} 
-            className="relative p-2 hover:bg-neutral-100 rounded-full transition"
-            aria-label="Shopping cart"
-          >
-            <ShoppingBag className="w-6 h-6 text-neutral-800" />
-            {cartCount > 0 && (
-              <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                {cartCount}
-              </span>
+          {/* Right Side Actions (Desktop) */}
+          <div className="hidden md:flex items-center gap-4">
+            {user ? (
+              <div className="flex items-center gap-4 text-sm font-medium">
+                <span>Hi, {user.name.split(' ')[0]}</span>
+                <NavLink onClick={logout}>Logout</NavLink>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <NavLink onClick={() => handleNavLinkClick('/login')}>Login</NavLink>
+                <button onClick={() => handleNavLinkClick('/register')} className="bg-neutral-900 text-white px-4 py-2 rounded-full hover:bg-neutral-800 transition-colors">
+                    Sign Up
+                </button>
+              </div>
             )}
-          </button>
+
+            <div className="w-px h-6 bg-neutral-200" />
+            
+            <button 
+              onClick={() => handleNavLinkClick('/cart')} 
+              className="relative p-2 hover:bg-neutral-100 rounded-full transition"
+              aria-label="Shopping cart"
+            >
+              <ShoppingBag className="w-6 h-6 text-neutral-800" />
+              {totalItems > 0 && (
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                  {totalItems}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Mobile Menu Button & Cart*/}
+          <div className="md:hidden flex items-center gap-2">
+             <button 
+                onClick={() => handleNavLinkClick('/cart')} 
+                className="relative p-2 hover:bg-neutral-100 rounded-full transition"
+                aria-label="Shopping cart"
+              >
+                <ShoppingBag className="w-6 h-6 text-neutral-800" />
+                {totalItems > 0 && (
+                  <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 hover:bg-neutral-100 rounded-full transition" aria-label="Open menu">
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Mobile Menu Dropdown */}
+      {isMenuOpen && (
+        <div 
+          className="md:hidden fixed top-16 left-0 w-full bg-white z-40 shadow-lg border-t border-neutral-200"
+        >
+            <div className="p-4 space-y-4">
+                <form onSubmit={handleSearchSubmit} className="relative">
+                    <input 
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search heritage..." 
+                        className="w-full pl-4 pr-10 py-3 bg-neutral-100 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                    <button type="submit" className="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <Search className="w-5 h-5 text-neutral-400" />
+                    </button>
+                </form>
+
+                <nav className="flex flex-col items-start space-y-3 font-medium text-lg">
+                    <NavLink onClick={() => handleNavLinkClick('/')}>Browse</NavLink>
+                    <NavLink onClick={handleSellOrDashboardClick}>{user?.role === 'seller' ? 'Dashboard' : 'Sell'}</NavLink>
+                </nav>
+
+                <div className="border-t border-neutral-200 pt-4 space-y-3">
+                    {user ? (
+                        <>
+                            <p className="px-1 text-sm font-medium">Hi, {user.name}</p>
+                            <button onClick={() => {logout(); setIsMenuOpen(false);}} className="w-full text-left font-medium p-2 rounded-md hover:bg-neutral-100 text-neutral-700">Logout</button>
+                        </>
+                    ) : (
+                        <div className="flex flex-col gap-3">
+                            <button onClick={() => handleNavLinkClick('/login')} className="w-full text-left p-2 rounded-md font-medium hover:bg-neutral-100 text-neutral-700">Login</button>
+                            <button onClick={() => handleNavLinkClick('/register')} className="w-full bg-neutral-900 text-white py-2 rounded-lg font-semibold hover:bg-neutral-800">Sign Up</button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+      )}
+    </>
   );
 };

@@ -1,8 +1,10 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useMemo } from 'react';
 import { CartItem, Product } from '../types';
 
 interface CartContextType {
   cartItems: CartItem[];
+  totalItems: number;
+  totalPrice: number;
   addToCart: (product: Product) => void;
   removeFromCart: (productId: string) => void;
   updateCartQuantity: (productId: string, newQuantity: number) => void;
@@ -16,6 +18,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Load cart from localStorage on initial render
   useEffect(() => {
+    // TODO Backend: Load cart from GET /api/cart on mount
     try {
       const savedCart = localStorage.getItem('kk-cart');
       if (savedCart) {
@@ -29,6 +32,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
+    // TODO Backend: Sync cart to database after each change
     localStorage.setItem('kk-cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
@@ -66,8 +70,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCartItems([]);
   };
 
+  const { totalItems, totalPrice } = useMemo(() => {
+    const itemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+    const priceTotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    return { totalItems: itemsCount, totalPrice: priceTotal };
+  }, [cartItems]);
+
+  const value = {
+    cartItems,
+    totalItems,
+    totalPrice,
+    addToCart,
+    removeFromCart,
+    updateCartQuantity,
+    clearCart
+  };
+
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateCartQuantity, clearCart }}>
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );

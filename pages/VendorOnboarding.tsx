@@ -1,157 +1,109 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Store, Camera, MapPin, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Store, CheckCircle, PenSquare } from 'lucide-react';
 import { navigate } from '../router';
 
+const ProgressBar: React.FC<{ currentStep: number; totalSteps: number }> = ({ currentStep, totalSteps }) => (
+  <div className="flex items-center justify-center gap-2 mb-8">
+    {Array.from({ length: totalSteps }).map((_, index) => (
+      <div
+        key={index}
+        className={`h-2 rounded-full transition-all duration-300 ${
+          index < currentStep ? 'bg-primary-500 w-8' : 'bg-neutral-200 w-4'
+        }`}
+      />
+    ))}
+  </div>
+);
+
 export const VendorOnboardingPage: React.FC = () => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // 0: Welcome, 1: Form, 2: Success
   const [formData, setFormData] = useState({
-    businessName: '',
-    ownerName: '',
-    phone: '',
+    shopName: '',
     location: '',
-    description: ''
+    bio: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleNext = () => setStep(s => Math.min(s + 1, 2));
+  const handleBack = () => setStep(s => Math.max(s - 1, 0));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would call an API to submit the application
     console.log("Submitting application:", formData);
-    setStep(3); // Go to success state
+    handleNext();
   };
 
-  return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <button onClick={() => navigate('/')} className="flex items-center text-gray-500 hover:text-gray-900 mb-6">
-        <ArrowLeft className="w-4 h-4 mr-1" /> Back
-      </button>
-
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        {step === 1 && (
-          <>
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Store className="w-8 h-8 text-emerald-600" />
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">Become a Kulture Kloze Seller</h1>
-              <p className="text-gray-500 mt-2">Start selling your unique finds to thousands of customers online.</p>
+  const renderStep = () => {
+    switch (step) {
+      case 0:
+        return (
+          <div className="text-center">
+            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Store className="w-8 h-8 text-primary-600" />
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-               <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 mb-1">More Customers</h3>
-                  <p className="text-sm text-gray-500">Reach people across the country, beyond your local area.</p>
-               </div>
-               <div className="bg-gray-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-gray-900 mb-1">Easy Shipping</h3>
-                  <p className="text-sm text-gray-500">Our delivery partners handle pickup and delivery for you.</p>
-               </div>
-            </div>
-
+            <h1 className="text-2xl font-bold text-neutral-900">Become a Seller</h1>
+            <p className="text-neutral-500 mt-2 mb-8">Join our community of creators and curators.</p>
             <button 
-              onClick={() => setStep(2)}
-              className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition"
+              onClick={handleNext}
+              className="w-full bg-neutral-900 text-white py-3 rounded-xl font-semibold hover:bg-neutral-800 transition"
             >
-              Start Selling
+              Get Started
             </button>
-          </>
-        )}
-
-        {step === 2 && (
+          </div>
+        );
+      case 1:
+        return (
           <form onSubmit={handleSubmit}>
-             <h2 className="text-xl font-bold mb-6">Your Shop Details</h2>
-             
-             <div className="space-y-4">
-                <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-1">Shop Name</label>
-                   <input 
-                    required
-                    name="businessName"
-                    value={formData.businessName}
-                    onChange={handleChange}
-                    type="text" 
-                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" 
-                    placeholder="e.g. Thrifty Gabs"
-                   />
-                </div>
-                
-                <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-1">Your Full Name</label>
-                   <input 
-                    required
-                    name="ownerName"
-                    value={formData.ownerName}
-                    onChange={handleChange}
-                    type="text" 
-                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" 
-                   />
-                </div>
-
-                <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Money Number</label>
-                   <input 
-                    required
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    type="tel" 
-                    className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" 
-                    placeholder="+267 7..."
-                   />
-                </div>
-
-                <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Location</label>
-                   <div className="flex gap-2">
-                     <input 
-                      required
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
-                      type="text" 
-                      className="flex-1 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" 
-                      placeholder="e.g. Block 8, Gaborone"
-                     />
-                     <button type="button" className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                        <MapPin className="w-5 h-5 text-gray-600" />
-                     </button>
-                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 cursor-pointer hover:bg-gray-50">
-                     <Camera className="w-8 h-8 mb-2" />
-                     <span className="text-sm">Tap to upload a profile picture</span>
-                     <input type="file" className="hidden" accept="image/*" />
-                  </div>
-                </div>
-             </div>
-
-             <button 
-              type="submit"
-              className="w-full mt-8 bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition"
-            >
-              Submit Application
-            </button>
+            <div className="text-center mb-6">
+                <h2 className="text-xl font-bold">Tell us about your shop</h2>
+                <p className="text-neutral-500 text-sm">This information will be displayed on your public profile.</p>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Shop Name</label>
+                <input required name="shopName" value={formData.shopName} onChange={handleChange} type="text" className="w-full border border-neutral-300 rounded-xl p-3 focus:ring-2 focus:ring-primary-500" placeholder="e.g. Vintage Finds" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Location</label>
+                <input required name="location" value={formData.location} onChange={handleChange} type="text" className="w-full border border-neutral-300 rounded-xl p-3 focus:ring-2 focus:ring-primary-500" placeholder="e.g. Gaborone, Botswana" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-1">Short Bio</label>
+                <textarea required name="bio" value={formData.bio} onChange={handleChange} rows={3} className="w-full border border-neutral-300 rounded-xl p-3 focus:ring-2 focus:ring-primary-500" placeholder="Describe what makes your shop special." />
+              </div>
+            </div>
+            <div className="mt-8 flex gap-3">
+               <button type="button" onClick={handleBack} className="w-full bg-neutral-200 text-neutral-800 py-3 rounded-xl font-semibold hover:bg-neutral-300 transition">Back</button>
+               <button type="submit" className="w-full bg-primary-500 text-white py-3 rounded-xl font-semibold hover:bg-primary-600 transition">Continue</button>
+            </div>
           </form>
-        )}
-
-        {step === 3 && (
+        );
+      case 2:
+        return (
            <div className="text-center py-8">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Received!</h2>
-              <p className="text-gray-500 mb-6">We will call you on <b>{formData.phone}</b> within 24 hours to verify your details and complete setup.</p>
-              <button onClick={() => navigate('/')} className="text-emerald-600 font-medium hover:underline">
-                 Return to Home
+              <h2 className="text-2xl font-bold text-neutral-900 mb-2">You're all set!</h2>
+              <p className="text-neutral-500 mb-6">Your shop is ready. Start by adding your first product to get noticed.</p>
+              <button onClick={() => navigate('/products/new')} className="w-full flex items-center justify-center gap-2 bg-primary-500 text-white py-3 rounded-xl font-semibold hover:bg-primary-600 transition">
+                 <PenSquare className="w-5 h-5"/> Add First Product
               </button>
            </div>
-        )}
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="max-w-md mx-auto px-4 py-8">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200/80">
+        <ProgressBar currentStep={step} totalSteps={3} />
+        {renderStep()}
       </div>
     </div>
   );

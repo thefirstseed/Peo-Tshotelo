@@ -1,5 +1,7 @@
 {
   "name": "Kulture Kloze",
   "description": "Kulture Kloze is an online marketplace for discovering and shopping unique secondhand items. Connect with sellers, find vintage treasures, and redefine your style.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }

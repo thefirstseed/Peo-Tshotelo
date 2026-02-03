@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, DollarSign, Package, ShoppingCart, Edit, Trash2 } from 'lucide-react';
-import { Product, Vendor } from '../types';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ArrowLeft, DollarSign, Package, ShoppingCart, Edit, Trash2, Plus } from 'lucide-react';
+import { Product } from '../types';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import { useAuth } from '../hooks/useAuth';
 import { fetchProductsByVendor, deleteProduct } from '../api/api';
 import { navigate } from '../router';
 
-const salesData = [
-  { month: 'Jan', Sales: 4000 }, { month: 'Feb', Sales: 3000 },
-  { month: 'Mar', Sales: 5200 }, { month: 'Apr', Sales: 4800 },
-  { month: 'May', Sales: 6100 }, { month: 'Jun', Sales: 5500 },
+// TODO Backend: Replace MOCK_REVENUE with GET /api/sellers/:id/analytics
+const MOCK_REVENUE_DATA = [
+  { month: 'Jan', revenue: 1200 }, { month: 'Feb', revenue: 1900 },
+  { month: 'Mar', revenue: 2500 }, { month: 'Apr', revenue: 2200 },
+  { month: 'May', revenue: 3100 }, { month: 'Jun', revenue: 2800 },
 ];
 
 export const SellerDashboardPage: React.FC = () => {
@@ -22,6 +23,7 @@ export const SellerDashboardPage: React.FC = () => {
   useEffect(() => {
     if (user?.vendorId) {
       setIsLoading(true);
+      // TODO Backend: Filter products by logged-in seller's vendorId
       fetchProductsByVendor(user.vendorId)
         .then(setProducts)
         .finally(() => setIsLoading(false));
@@ -45,64 +47,46 @@ export const SellerDashboardPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">Seller Dashboard</h1>
           <p className="text-neutral-500 mt-1">Welcome back, {user?.name || 'Seller'}!</p>
         </div>
-        <button onClick={() => navigate('/')} className="hidden md:flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-900">
-          <ArrowLeft className="w-4 h-4 mr-1" /> Back to Shop
+        <button 
+          onClick={() => navigate('/products/new')}
+          className="bg-neutral-900 text-white px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-neutral-800 flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4"/> New Product
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <StatCard icon={DollarSign} title="Total Revenue" value={`P ${totalRevenue.toFixed(2)}`} color="primary" />
         <StatCard icon={Package} title="Active Listings" value={products.length.toString()} color="blue" />
-        <StatCard icon={ShoppingCart} title="New Orders" value={"5"} color="orange" />
+        <StatCard icon={ShoppingCart} title="Sales (Month)" value={"12"} color="orange" />
       </div>
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200/80 mb-8">
-        <h2 className="text-xl font-bold mb-4">Monthly Sales Performance</h2>
+        <h2 className="text-xl font-bold mb-4">Monthly Revenue</h2>
         <div style={{ width: '100%', height: 300 }}>
            <ResponsiveContainer>
-              <BarChart data={salesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" vertical={false} />
-                <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} stroke="#868e96" />
-                <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="#868e96" tickFormatter={(value) => `P${value/1000}k`} />
-                <Tooltip cursor={{fill: 'rgba(252, 227, 218, 0.5)'}} contentStyle={{backgroundColor: '#fff', border: '1px solid #ebe7e4', borderRadius: '0.5rem'}}/>
-                <Legend iconSize={10} />
-                <Bar dataKey="Sales" fill="#e85d3b" radius={[4, 4, 0, 0]} />
+              <BarChart data={MOCK_REVENUE_DATA} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#ebe7e4" vertical={false} />
+                <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} stroke="#716b65" />
+                <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="#716b65" tickFormatter={(value) => `P${value/1000}k`} />
+                <Tooltip cursor={{fill: 'rgba(232, 93, 59, 0.1)'}} contentStyle={{backgroundColor: '#fff', border: '1px solid #ebe7e4', borderRadius: '0.75rem'}}/>
+                <Bar dataKey="revenue" fill="#e85d3b" radius={[4, 4, 0, 0]} />
               </BarChart>
            </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-neutral-200/80">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Your Listings</h2>
-            <button 
-              onClick={() => navigate('/products/new')}
-              className="bg-neutral-900 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-neutral-800"
-            >
-              Add New Product
-            </button>
-          </div>
-          <div className="space-y-4">
-            {isLoading ? <p>Loading listings...</p> : products.length > 0 ? products.map(product => (
-              <ProductRow 
-                key={product.id} 
-                product={product} 
-                onEditClick={() => navigate(`/products/edit/${product.id}`)}
-                onDeleteClick={() => setProductToDelete(product)}
-              />
-            )) : <p className="text-neutral-500 text-center py-8">You have no active listings.</p>}
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200/80">
-          <h2 className="text-xl font-bold mb-4">Recent Orders</h2>
-          <div className="space-y-4">
-            <OrderRow customer="Onalenna" items={1} status="New" />
-            <OrderRow customer="Thato" items={2} status="Shipped" />
-            <OrderRow customer="Lerato" items={1} status="New" />
-            <OrderRow customer="Amara" items={3} status="Completed" />
-          </div>
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200/80">
+        <h2 className="text-xl font-bold mb-4">Your Listings</h2>
+        <div className="space-y-2">
+          {isLoading ? <p>Loading listings...</p> : products.length > 0 ? products.map(product => (
+            <ProductRow 
+              key={product.id} 
+              product={product} 
+              onEditClick={() => navigate(`/products/edit/${product.id}`)}
+              onDeleteClick={() => setProductToDelete(product)}
+            />
+          )) : <p className="text-neutral-500 text-center py-8">You have no active listings. Add your first product to get started!</p>}
         </div>
       </div>
 
@@ -127,7 +111,14 @@ const colorVariants = {
     orange: { bg: 'bg-orange-50', text: 'text-orange-600' }
 };
 
-const StatCard = ({ icon: Icon, title, value, color }) => (
+interface StatCardProps {
+  icon: React.ElementType;
+  title: string;
+  value: string;
+  color: keyof typeof colorVariants;
+}
+
+const StatCard = ({ icon: Icon, title, value, color }: StatCardProps) => (
   <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200/80 flex items-center gap-4">
     <div className={`w-12 h-12 ${colorVariants[color]?.bg || 'bg-neutral-100'} rounded-xl flex items-center justify-center`}>
       <Icon className={`w-6 h-6 ${colorVariants[color]?.text || 'text-neutral-600'}`} />
@@ -139,36 +130,25 @@ const StatCard = ({ icon: Icon, title, value, color }) => (
   </div>
 );
 
-const ProductRow = ({ product, onEditClick, onDeleteClick }: { product: Product; onEditClick: () => void; onDeleteClick: () => void }) => (
-  <div className="flex items-center gap-4 p-3 hover:bg-neutral-100 rounded-lg transition-colors">
-    <img src={product.imageUrls[0]} alt={product.title} className="w-16 h-16 object-cover rounded-md bg-neutral-100" />
-    <div className="flex-1">
-      <p className="font-semibold text-neutral-900">{product.title}</p>
-      <p className="text-sm text-neutral-600">Price: P {product.price.toFixed(2)}</p>
-    </div>
-    <div className="flex items-center gap-4 text-sm">
-      <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium text-xs">Active</span>
-      <div className="flex gap-2">
-        <button onClick={onEditClick} className="text-neutral-500 hover:text-blue-600"><Edit className="w-5 h-5" /></button>
-        <button onClick={onDeleteClick} className="text-neutral-500 hover:text-red-600"><Trash2 className="w-5 h-5" /></button>
-      </div>
+interface ProductRowProps {
+  product: Product;
+  onEditClick: () => void;
+  onDeleteClick: () => void;
+}
+
+const ProductRow = ({ product, onEditClick, onDeleteClick }: ProductRowProps) => (
+  <div className="flex items-center gap-4 p-3 hover:bg-neutral-100 rounded-xl transition-colors">
+    <img src={product.imageUrls[0]} alt={product.title} className="w-16 h-16 object-cover rounded-md bg-neutral-100 flex-shrink-0" />
+    <div className="flex-1 grid grid-cols-4 gap-4 items-center">
+        <div className="col-span-2">
+            <p className="font-semibold text-neutral-900 truncate">{product.title}</p>
+            <p className="text-sm text-neutral-500">{product.category} &middot; {product.condition}</p>
+        </div>
+        <p className="text-sm text-neutral-700 font-medium">P {product.price.toFixed(2)}</p>
+        <div className="flex items-center justify-end gap-2">
+            <button onClick={onEditClick} className="p-2 text-neutral-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Edit className="w-5 h-5" /></button>
+            <button onClick={onDeleteClick} className="p-2 text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-5 h-5" /></button>
+        </div>
     </div>
   </div>
 );
-
-const OrderRow = ({ customer, items, status }) => {
-    const statusStyles = {
-        New: 'bg-orange-100 text-orange-800',
-        Shipped: 'bg-blue-100 text-blue-800',
-        Completed: 'bg-neutral-200 text-neutral-800'
-    };
-    return (
-        <div className="flex items-center justify-between p-3 hover:bg-neutral-100 rounded-lg">
-            <div>
-                <p className="font-semibold">{customer}</p>
-                <p className="text-sm text-neutral-500">{items} item(s)</p>
-            </div>
-            <span className={`px-2 py-1 rounded-full font-medium text-xs ${statusStyles[status]}`}>{status}</span>
-        </div>
-    )
-};

@@ -4,18 +4,67 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
     <title>Kulture Kloze | Your Marketplace for Secondhand Treasures</title>
-    <!-- Favicon (Emoji as placeholder) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛍️</text></svg>">
-    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: '#fef2ee',
+                100: '#fce3da',
+                200: '#f9c5b7',
+                300: '#f6a793',
+                400: '#f07d61',
+                500: '#e85d3b',
+                600: '#d94a2b',
+                700: '#b53a25',
+                800: '#923124',
+                900: '#762b21',
+                950: '#40120d',
+              },
+              neutral: {
+                50: '#fbfaf9',
+                100: '#f5f3f1',
+                200: '#ebe7e4',
+                300: '#ded9d4',
+                400: '#c2bcb6',
+                500: '#a7a09a',
+                600: '#8c857f',
+                700: '#716b65',
+                800: '#58534e',
+                900: '#47433f',
+                950: '#2b2825',
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              heading: ['Manrope', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://esm.sh/react-image-crop@11.0.5/dist/ReactCrop.css">
-    
-    <!-- importmap removed to avoid conflicts with Vite -->
+    <link rel="stylesheet" href="index.css">
+  <script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "jsonwebtoken": "https://esm.sh/jsonwebtoken@^9.0.3",
+    "recharts": "https://aistudiocdn.com/recharts@^2.12.7",
+    "react-image-crop": "https://esm.sh/react-image-crop@11.0.5"
+  }
+}
+</script>
 </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

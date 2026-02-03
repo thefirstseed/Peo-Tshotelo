@@ -1,19 +1,12 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useMemo } from 'react';
 
 // --- Router Context ---
-const RouterContext = createContext<{ params: Record<string, string> }>({ params: {} });
+const RouterContext = createContext<{ params: Record<string, string>; query: URLSearchParams }>({ 
+  params: {}, 
+  query: new URLSearchParams() 
+});
 
-const getCurrentPath = () => {
-  let hash = window.location.hash.slice(1);
-  // Supabase auth callback adds parameters like access_token, refresh_token, etc.
-  // or error_code, error_description
-  // We want to route to '/' or '/login' but preserve params if needed.
-  
-  if (!hash || hash.startsWith('access_token=') || hash.startsWith('error_code=')) {
-      return '/'; 
-  }
-  return hash || '/';
-};
+const getCurrentPath = () => window.location.hash.slice(1) || '/';
 
 // --- Core Router Component ---
 export const Router: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -22,16 +15,14 @@ export const Router: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   useEffect(() => {
     const onHashChange = () => setPath(getCurrentPath());
     window.addEventListener('hashchange', onHashChange);
-    
-    // Handle hash links from email confirmation (e.g. #error_code=404&error_description=User+not+found)
-    // Supabase redirects to Site URL with hash fragment containing tokens or errors
-    // Our hash router might be confused by query params in the hash
-    
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
   let matchedComponent = null;
   let routeParams = {};
+  
+  const [pathName, queryString] = path.split('?');
+  const query = useMemo(() => new URLSearchParams(queryString || ''), [queryString]);
 
   const routes = React.Children.toArray(children) as React.ReactElement<RouteProps>[];
   const defaultRoute = routes.find(route => route.props.default);
@@ -44,7 +35,7 @@ export const Router: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         return '([^/]+)';
       });
       
-      const match = path.match(new RegExp(`^${regexPath}$`));
+      const match = pathName.match(new RegExp(`^${regexPath}$`));
       
       if (match) {
         paramNames.forEach((name, index) => {
@@ -61,7 +52,7 @@ export const Router: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }
 
   return (
-    <RouterContext.Provider value={{ params: routeParams }}>
+    <RouterContext.Provider value={{ params: routeParams, query }}>
       {matchedComponent}
     </RouterContext.Provider>
   );
@@ -83,4 +74,9 @@ export const navigate = (to: string) => {
 export const useParams = () => {
   const { params } = useContext(RouterContext);
   return params;
+};
+
+export const useQuery = () => {
+  const { query } = useContext(RouterContext);
+  return query;
 };
