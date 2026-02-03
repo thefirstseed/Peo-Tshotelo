@@ -14,6 +14,9 @@ import { ProductEditPage } from './pages/ProductEdit';
 import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { OurStoryPage } from './pages/OurStory';
+import { ProfileSettingsPage } from './pages/ProfileSettings';
+import { SettingsPage } from './pages/SettingsPage';
 
 export default function App() {
   const { user } = useAuth();
@@ -42,12 +45,23 @@ export default function App() {
           <Route path="/cart" component={CartPage} />
           <Route path="/login" component={LoginPage} />
           <Route path="/register" component={RegisterPage} />
+          <Route path="/our-story" component={OurStoryPage} />
           <Route path="/sell" component={user?.role === 'seller' ? SellerDashboardPage : VendorOnboardingPage} />
           
-          {/* Protected Seller Routes */}
+          {/* Protected Routes */}
           <Route path="/dashboard" component={() => (
             <ProtectedRoute roles={['seller']}>
               <SellerDashboardPage />
+            </ProtectedRoute>
+          )} />
+           <Route path="/profile" component={() => (
+            <ProtectedRoute roles={['seller', 'buyer']}>
+              <ProfileSettingsPage />
+            </ProtectedRoute>
+          )} />
+          <Route path="/settings" component={() => (
+            <ProtectedRoute roles={['seller', 'buyer']}>
+              <SettingsPage />
             </ProtectedRoute>
           )} />
           

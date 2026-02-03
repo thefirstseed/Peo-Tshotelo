@@ -35,6 +35,11 @@ export interface User {
   email: string;
   role: 'buyer' | 'seller';
   vendorId?: string; // Only if role is 'seller'
+  address?: {
+    street: string;
+    city: string;
+    country: string;
+  }
 }
 
 // ViewState is no longer needed for routing, but might be useful for other UI states.

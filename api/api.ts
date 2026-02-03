@@ -6,8 +6,10 @@ import { MOCK_PRODUCTS, MOCK_VENDORS } from '../constants';
 let productsDB: Product[] = [...MOCK_PRODUCTS];
 const vendorsDB: Vendor[] = [...MOCK_VENDORS];
 let usersDB: User[] = [
-  { id: 'user1', name: 'Thrifty Gabs', email: 'seller@kulture.com', role: 'seller', vendorId: 'v1' },
-  { id: 'user2', name: 'Pula Buyer', email: 'buyer@kulture.com', role: 'buyer' },
+  { id: 'user1', name: 'Thrifty Gabs', email: 'seller.gabs@example.com', role: 'seller', vendorId: 'v1' },
+  { id: 'user2', name: 'Kagiso Dlamini', email: 'seller.kagiso@example.com', role: 'seller', vendorId: 'v2' },
+  { id: 'user3', name: 'Boho Finds', email: 'seller.boho@example.com', role: 'seller', vendorId: 'v3' },
+  { id: 'user4', name: 'Pula Buyer', email: 'buyer@kulture.com', role: 'buyer' },
 ];
 
 const simulateDelay = (delay = 500) => new Promise(res => setTimeout(res, delay));
@@ -39,6 +41,13 @@ export const register = async (name: string, email: string, password: string): P
     usersDB.push(newUser);
     return newUser;
 };
+
+// --- User API ---
+export const fetchUserByVendorId = async (vendorId: string): Promise<User | null> => {
+    await simulateDelay(100);
+    const user = usersDB.find(u => u.vendorId === vendorId);
+    return user || null;
+}
 
 
 // --- Product API ---

@@ -61,7 +61,7 @@ export const ProductEditPage: React.FC = () => {
   const [formData, setFormData] = useState<Omit<Product, 'id' | 'vendorId' | 'vendorName'>>({
     title: '', price: 0, description: '', category: 'Clothing', imageUrls: [], condition: 'Like New', sizes: []
   });
-  // Separate state for file objects, which won't be part of the main form data JSON
+  const [priceInput, setPriceInput] = useState(''); // State for the price text input
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   
   const [isLoading, setIsLoading] = useState(false);
@@ -86,15 +86,28 @@ export const ProductEditPage: React.FC = () => {
             condition: product.condition || 'Good',
             sizes: product.sizes || []
           });
+          // Sync the text input with the fetched price
+          setPriceInput(product.price > 0 ? product.price.toString() : '');
         })
         .catch(() => setError("Could not find the product to edit."))
         .finally(() => setIsLoading(false));
     }
   }, [productId, user?.vendorId]);
 
+  // Generic handler for most form inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: name === 'price' ? parseFloat(value) || 0 : value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // Specific handler for the price input to manage text and number states
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    // Regex to allow only numbers and a single decimal point with up to 2 decimal places
+    if (/^\d*\.?\d{0,2}$/.test(value)) {
+        setPriceInput(value);
+        setFormData(prev => ({...prev, price: parseFloat(value) || 0}));
+    }
   };
 
   const handleImageUpdate = (files: File[], remainingUrls: string[]) => {
@@ -188,7 +201,20 @@ export const ProductEditPage: React.FC = () => {
             />
             <div>
                 <label htmlFor="price" className="block text-sm font-medium text-neutral-700 mb-1">Price (Pula)</label>
-                <input type="number" name="price" id="price" required min="0" step="0.01" value={formData.price} onChange={handleChange} placeholder="0.00" className={inputStyles}/>
+                <div className="relative">
+                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">P</span>
+                    <input 
+                        type="text" 
+                        inputMode="decimal"
+                        name="price" 
+                        id="price" 
+                        required 
+                        value={priceInput} 
+                        onChange={handlePriceChange} 
+                        placeholder="0.00" 
+                        className={`${inputStyles} pl-8`}
+                    />
+                </div>
             </div>
 
             <div className="flex justify-end gap-4 pt-4 border-t border-neutral-100">

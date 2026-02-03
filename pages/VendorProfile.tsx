@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Vendor, Product } from '../types';
-import { ArrowLeft, Star, MapPin, BadgeCheck, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, BadgeCheck, CalendarDays, Check } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { useParams, navigate } from '../router';
 import { fetchVendor, fetchProductsByVendor } from '../api/api';
@@ -11,6 +11,7 @@ export const VendorProfilePage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
     if (!vendorId) {
@@ -39,6 +40,11 @@ export const VendorProfilePage: React.FC = () => {
 
     loadData();
   }, [vendorId]);
+
+  const handleFollowToggle = () => {
+    // TODO Backend: POST /api/sellers/:id/follow
+    setIsFollowing(prev => !prev);
+  }
 
   const formattedJoinedDate = vendor 
     ? new Date(vendor.joinedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -111,8 +117,16 @@ export const VendorProfilePage: React.FC = () => {
           </div>
 
           <div className="w-full md:w-auto flex flex-col md:items-end gap-2 self-start md:self-center">
-            <button className="w-full md:w-auto px-6 py-2 bg-neutral-900 text-white rounded-full font-semibold hover:bg-neutral-800 transition text-sm">
-              Follow
+            <button 
+              onClick={handleFollowToggle}
+              className={`w-full md:w-auto px-6 py-2 rounded-full font-semibold transition text-sm flex items-center justify-center gap-1.5
+                ${isFollowing 
+                  ? 'bg-neutral-200 text-neutral-800' 
+                  : 'bg-neutral-900 text-white hover:bg-neutral-800'}`
+                }
+            >
+              {isFollowing && <Check className="w-4 h-4" />}
+              {isFollowing ? 'Following' : 'Follow'}
             </button>
           </div>
         </div>

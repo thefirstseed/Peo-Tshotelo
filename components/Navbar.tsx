@@ -1,11 +1,58 @@
-import React, { useState } from 'react';
-import { ShoppingBag, Search, Menu, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ShoppingBag, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, Settings } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { navigate } from '../router';
 
+const UserMenu: React.FC = () => {
+    const { user, logout } = useAuth();
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    if (!user) return null;
+
+    const handleMenuClick = (path: string) => {
+        navigate(path);
+        setIsOpen(false);
+    }
+    
+    return (
+        <div className="relative" ref={menuRef}>
+            <button 
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center gap-2 text-sm font-medium hover:bg-neutral-100 p-2 rounded-full transition"
+            >
+                <div className="w-8 h-8 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-bold">
+                    {user.name.charAt(0)}
+                </div>
+                <span>Hi, {user.name.split(' ')[0]}</span>
+            </button>
+            {isOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-neutral-200/80 py-2 z-50">
+                    <button onClick={() => handleMenuClick('/profile')} className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 flex items-center gap-2"><Settings className="w-4 h-4"/> Profile Settings</button>
+                    {user.role === 'seller' && <button onClick={() => handleMenuClick('/dashboard')} className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 flex items-center gap-2"><LayoutDashboard className="w-4 h-4" /> Seller Dashboard</button>}
+                    <div className="border-t my-1 border-neutral-100"></div>
+                    <button onClick={logout} className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"><LogOut className="w-4 h-4" /> Logout</button>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
 export const Navbar: React.FC = () => {
   const { totalItems } = useCart();
+  // FIX: Destructured `logout` from `useAuth` to make it available for the mobile menu's logout button.
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,10 +111,7 @@ export const Navbar: React.FC = () => {
           {/* Right Side Actions (Desktop) */}
           <div className="hidden md:flex items-center gap-4">
             {user ? (
-              <div className="flex items-center gap-4 text-sm font-medium">
-                <span>Hi, {user.name.split(' ')[0]}</span>
-                <NavLink onClick={logout}>Logout</NavLink>
-              </div>
+              <UserMenu />
             ) : (
               <div className="flex items-center gap-2 text-sm font-medium">
                 <NavLink onClick={() => handleNavLinkClick('/login')}>Login</NavLink>
@@ -136,6 +180,7 @@ export const Navbar: React.FC = () => {
                 <nav className="flex flex-col items-start space-y-3 font-medium text-lg">
                     <NavLink onClick={() => handleNavLinkClick('/')}>Browse</NavLink>
                     <NavLink onClick={handleSellOrDashboardClick}>{user?.role === 'seller' ? 'Dashboard' : 'Sell'}</NavLink>
+                    {user && <NavLink onClick={() => handleNavLinkClick('/profile')}>Profile Settings</NavLink>}
                 </nav>
 
                 <div className="border-t border-neutral-200 pt-4 space-y-3">

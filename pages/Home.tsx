@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Product, Vendor } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { VendorCard } from '../components/VendorCard';
@@ -16,6 +16,7 @@ export const HomePage: React.FC = () => {
   
   const query = useQuery();
   const searchQuery = query.get('q') || '';
+  const productsGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -48,6 +49,10 @@ export const HomePage: React.FC = () => {
       return matchesCategory && matchesSearch;
     });
   }, [products, selectedCategory, searchQuery]);
+
+  const handleExploreClick = () => {
+    productsGridRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
   
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -64,10 +69,15 @@ export const HomePage: React.FC = () => {
             The premium destination for curated African vintage, reworked classics, and emerging designers.
           </p>
           <div className="mt-8 flex justify-center lg:justify-start items-center gap-4">
-            <button className="bg-primary-500 text-white font-semibold px-8 py-3 rounded-full hover:bg-primary-600 transition-transform active:scale-95 shadow-lg shadow-primary-200">
+            <button 
+              onClick={handleExploreClick}
+              className="bg-primary-500 text-white font-semibold px-8 py-3 rounded-full hover:bg-primary-600 transition-transform active:scale-95 shadow-lg shadow-primary-200">
               Explore Drops
             </button>
-            <button className="flex items-center gap-1.5 font-semibold text-neutral-800 hover:text-primary-500 transition">
+            <button 
+              onClick={() => navigate('/our-story')}
+              className="flex items-center gap-1.5 font-semibold text-neutral-800 hover:text-primary-500 transition"
+            >
               <span>Our Story</span>
               <ArrowRight className="w-4 h-4" />
             </button>
@@ -100,7 +110,7 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* Product Grid */}
-      <div className="mb-16">
+      <div ref={productsGridRef} className="mb-16">
         <h2 className="text-2xl font-bold text-neutral-900 mb-4 tracking-tight">Fresh Finds</h2>
         {isLoading ? (
            <div className="text-center py-20">Loading products...</div>

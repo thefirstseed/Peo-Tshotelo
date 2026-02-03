@@ -11,7 +11,7 @@ interface UserWithPassword extends User {
 // TODO Backend: Store JWT in httpOnly cookie, refresh on page load
 // 1. A mock user database is now managed directly within the context.
 const MOCK_USERS: UserWithPassword[] = [
-  { id: 'u1', name: 'Thabo Moeng', email: 'thabo@email.com', password: 'password123', role: 'buyer' },
+  { id: 'u1', name: 'Thabo Moeng', email: 'thabo@email.com', password: 'password123', role: 'buyer', address: { street: '123 Main Road', city: 'Gaborone', country: 'Botswana' } },
   { id: 'u2', name: 'Kagiso Dlamini', email: 'kagiso@email.com', password: 'password123', role: 'seller', vendorId: 'v2' },
   // Users for the demo login buttons
   { id: 'user1', name: 'Thrifty Gabs', email: 'seller@kulture.com', password: 'password', role: 'seller', vendorId: 'v1' },
@@ -24,6 +24,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string, role?: 'buyer' | 'seller') => Promise<void>;
   logout: () => void;
+  updateUser: (updatedDetails: Partial<User>) => Promise<void>;
+  upgradeToSeller: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -80,8 +82,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     navigate('/login');
   };
+
+  const updateUser = async (updatedDetails: Partial<User>) => {
+    if (!user) throw new Error("Not authenticated");
+    setIsLoading(true);
+    await new Promise(r => setTimeout(r, 600)); // Simulate network delay
+
+    // Update the "database"
+    setUsersDB(prevDb => prevDb.map(dbUser => 
+        dbUser.id === user.id ? { ...dbUser, ...updatedDetails } : dbUser
+    ));
+
+    // Update the live user state
+    setUser(prevUser => prevUser ? { ...prevUser, ...updatedDetails } : null);
+    setIsLoading(false);
+  };
+
+  const upgradeToSeller = async () => {
+    if (!user || user.role === 'seller') return;
+    
+    setIsLoading(true);
+    await new Promise(r => setTimeout(r, 600)); // Simulate network delay
+
+    const newVendorId = 'v' + Date.now();
+    const updatedUser = { ...user, role: 'seller' as const, vendorId: newVendorId };
+
+    setUsersDB(prevDb => prevDb.map(dbUser => 
+        dbUser.id === user.id ? { ...dbUser, role: 'seller', vendorId: newVendorId } : dbUser
+    ));
+    
+    setUser(updatedUser);
+    setIsLoading(false);
+  };
   
-  const value = { user, isLoading, login, register, logout };
+  const value = { user, isLoading, login, register, logout, updateUser, upgradeToSeller };
 
   // App is always ready to render, no initial loading from storage.
   return (

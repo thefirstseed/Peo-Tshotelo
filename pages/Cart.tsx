@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, ArrowLeft, ShoppingBag, CheckCircle } from 'lucide-react';
+import { Trash2, ArrowLeft, ShoppingBag, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { navigate } from '../router';
@@ -13,10 +13,16 @@ export const CartPage: React.FC = () => {
   const subtotal = totalPrice;
   const shippingFee = 0; // As per spec, shipping is free.
   const total = subtotal + shippingFee;
+  const isAddressMissing = user && user.role === 'buyer' && !user.address;
 
   const handleCheckout = () => {
     if (!user) {
       navigate('/login');
+      return;
+    }
+    if (isAddressMissing) {
+      alert("Please add a shipping address in your profile before checking out.");
+      navigate('/profile');
       return;
     }
     setIsProcessing(true);
@@ -69,6 +75,18 @@ export const CartPage: React.FC = () => {
 
       <div className="grid lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-4">
+          {isAddressMissing && (
+             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg flex gap-3">
+                <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div>
+                   <h4 className="font-bold text-yellow-800">Shipping Address Needed</h4>
+                   <p className="text-sm text-yellow-700 mt-1">
+                     Please add a shipping address to your profile to proceed with checkout.
+                     <button onClick={() => navigate('/profile')} className="font-semibold underline ml-1 hover:text-yellow-900">Add Address</button>
+                   </p>
+                </div>
+             </div>
+          )}
           {cartItems.map(item => (
             <div key={item.product.id} className="flex gap-4 bg-white p-4 rounded-xl border border-neutral-200/80 shadow-sm">
               <img 
@@ -127,8 +145,8 @@ export const CartPage: React.FC = () => {
             </div>
             <button 
               onClick={handleCheckout}
-              disabled={isProcessing}
-              className="w-full mt-6 bg-primary-500 text-white py-3 rounded-full font-semibold hover:bg-primary-600 transition flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait"
+              disabled={isProcessing || isAddressMissing}
+              className="w-full mt-6 bg-primary-500 text-white py-3 rounded-full font-semibold hover:bg-primary-600 transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isProcessing ? 'Processing...' : (user ? 'Confirm & Checkout' : 'Login to Checkout')}
             </button>

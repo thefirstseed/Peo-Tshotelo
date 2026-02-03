@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Product, Vendor } from '../types';
+import { Product, Vendor, User } from '../types';
 import { ArrowLeft, Star, ShieldCheck, Truck, MessageCircle, ChevronLeft, ChevronRight, Check } from 'lucide-react';
-import { fetchProduct, fetchVendor } from '../api/api';
+import { fetchProduct, fetchVendor, fetchUserByVendorId } from '../api/api';
 import { navigate, useParams } from '../router';
 import { useCart } from '../hooks/useCart';
 
@@ -11,6 +11,7 @@ export const ProductDetailsPage: React.FC = () => {
   
   const [product, setProduct] = useState<Product | null>(null);
   const [vendor, setVendor] = useState<Vendor | null>(null);
+  const [vendorUser, setVendorUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -36,14 +37,17 @@ export const ProductDetailsPage: React.FC = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        // TODO Backend: Replace MOCK_PRODUCTS.find() with GET /api/products/:id
         const fetchedProduct = await fetchProduct(productId);
         setProduct(fetchedProduct);
         setCurrentImageIndex(0);
         
         if (fetchedProduct.vendorId) {
-          const fetchedVendor = await fetchVendor(fetchedProduct.vendorId);
+          const [fetchedVendor, fetchedVendorUser] = await Promise.all([
+            fetchVendor(fetchedProduct.vendorId),
+            fetchUserByVendorId(fetchedProduct.vendorId)
+          ]);
           setVendor(fetchedVendor);
+          setVendorUser(fetchedVendorUser);
         }
         setError(null);
       } catch (err) {
@@ -82,6 +86,10 @@ export const ProductDetailsPage: React.FC = () => {
         setCurrentImageIndex(prev => (prev - 1 + product.imageUrls.length) % product.imageUrls.length);
     }
   };
+
+  const mailtoHref = vendorUser 
+    ? `mailto:${vendorUser.email}?subject=Inquiry about your product: ${encodeURIComponent(product?.title || '')}`
+    : '#';
 
   const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
     <div className="text-center py-20 flex flex-col items-center gap-4">
@@ -177,9 +185,15 @@ export const ProductDetailsPage: React.FC = () => {
                 'Add to Bag'
               )}
             </button>
-            <button className="col-span-1 flex items-center justify-center bg-neutral-100 rounded-full hover:bg-neutral-200 transition">
+            <a 
+              href={mailtoHref}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="col-span-1 flex items-center justify-center bg-neutral-100 rounded-full hover:bg-neutral-200 transition"
+              aria-label="Message seller"
+            >
                <MessageCircle className="w-6 h-6 text-neutral-700" />
-            </button>
+            </a>
           </div>
 
           <div className="mb-8 border-t border-neutral-100 pt-6">
