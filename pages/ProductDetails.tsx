@@ -1,22 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Product, Vendor, User } from '../types';
-import { ArrowLeft, Star, ShieldCheck, Truck, MessageCircle, ChevronLeft, ChevronRight, Check } from 'lucide-react';
-import { fetchProduct, fetchVendor, fetchUserByVendorId } from '../api/api';
+import { Product, Vendor, User, Review } from '../types';
+import { ArrowLeft, Star, ShieldCheck, Truck, ChevronLeft, ChevronRight, Check, Heart, AlertTriangle } from 'lucide-react';
+import { fetchProduct, fetchVendor, fetchUserByVendorId, fetchReviewsByProduct, submitReview } from '../api/api';
 import { navigate, useParams } from '../router';
 import { useCart } from '../hooks/useCart';
+import { useAuth } from '../hooks/useAuth';
+import { useWishlist } from '../hooks/useWishlist';
+import { StarRating } from '../components/StarRating';
 
 export const ProductDetailsPage: React.FC = () => {
   const { id: productId } = useParams();
   const { addToCart } = useCart();
+  const { user } = useAuth();
+  const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [vendorUser, setVendorUser] = useState<User | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAdded, setIsAdded] = useState(false);
   const addedTimeoutRef = useRef<number | null>(null);
+
+  // State for new review form
+  const [newReviewRating, setNewReviewRating] = useState(0);
+  const [newReviewComment, setNewReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   useEffect(() => {
     // Cleanup timeout on component unmount
@@ -37,8 +49,13 @@ export const ProductDetailsPage: React.FC = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const fetchedProduct = await fetchProduct(productId);
+        const [fetchedProduct, fetchedReviews] = await Promise.all([
+          fetchProduct(productId),
+          fetchReviewsByProduct(productId)
+        ]);
+        
         setProduct(fetchedProduct);
+        setReviews(fetchedReviews);
         setCurrentImageIndex(0);
         
         if (fetchedProduct.vendorId) {
@@ -51,8 +68,8 @@ export const ProductDetailsPage: React.FC = () => {
         }
         setError(null);
       } catch (err) {
-        setError("Failed to load product details.");
-        console.error(err);
+        setError(err.message || "Failed to load product details.");
+        console.error("Failed to load product details:", err);
       } finally {
         setIsLoading(false);
       }
@@ -62,7 +79,7 @@ export const ProductDetailsPage: React.FC = () => {
   }, [productId]);
 
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product || product.stock === 0) return;
     addToCart(product);
     setIsAdded(true);
 
@@ -87,9 +104,37 @@ export const ProductDetailsPage: React.FC = () => {
     }
   };
 
-  const mailtoHref = vendorUser 
-    ? `mailto:${vendorUser.email}?subject=Inquiry about your product: ${encodeURIComponent(product?.title || '')}`
-    : '#';
+  const wishlisted = product ? isWishlisted(product.id) : false;
+  const handleWishlistToggle = () => {
+    if (!product) return;
+    if (wishlisted) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
+  };
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setReviewError(null);
+    if (!product || !user || newReviewRating === 0 || !newReviewComment.trim()) {
+      setReviewError("Please provide a rating and a comment to submit your review.");
+      return;
+    }
+    setIsSubmittingReview(true);
+    try {
+      const submittedReview = await submitReview(product.id, user.id, user.name, newReviewRating, newReviewComment);
+      setReviews(prev => [submittedReview, ...prev]); // Optimistically add to list
+      setNewReviewComment('');
+      setNewReviewRating(0);
+    } catch (error) {
+      setReviewError("There was an error submitting your review. Please try again.");
+      console.error("Failed to submit review:", error);
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
 
   const ErrorDisplay: React.FC<{ message: string }> = ({ message }) => (
     <div className="text-center py-20 flex flex-col items-center gap-4">
@@ -104,7 +149,10 @@ export const ProductDetailsPage: React.FC = () => {
   if (error) return <ErrorDisplay message={error} />;
   if (!product) return <ErrorDisplay message="Product could not be found." />;
   
+  const averageRating = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) : 0;
+
   return (
+    <>
     <div className="max-w-7xl mx-auto px-0 md:px-4 lg:px-8 bg-white md:bg-transparent min-h-screen">
       <div className="flex flex-col md:flex-row gap-0 md:gap-8 bg-white md:rounded-2xl overflow-hidden md:shadow-lg md:border border-neutral-200/50 md:mt-4 md:p-6">
         
@@ -162,22 +210,31 @@ export const ProductDetailsPage: React.FC = () => {
 
           <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-2 tracking-tight">{product.title}</h1>
           
-          <div className="flex items-center gap-2 mb-6">
-             <span className="text-3xl font-bold text-neutral-900">P {product.price.toFixed(2)}</span>
-             {product.condition && (
+          <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <StarRating rating={averageRating} />
+              <span className="text-sm text-neutral-600">{reviews.length} review{reviews.length !== 1 ? 's' : ''}</span>
+            </div>
+            {product.condition && (
                <span className="bg-neutral-100 text-neutral-600 px-2.5 py-1 rounded text-xs font-medium border border-neutral-200">
                  {product.condition}
                </span>
-             )}
+            )}
           </div>
+          <span className="text-3xl font-bold text-neutral-900 mb-6 block">P {product.price.toFixed(2)}</span>
+
 
           <div className="grid grid-cols-5 gap-3 mb-8">
             <button 
               onClick={handleAddToCart}
+              disabled={product.stock === 0 || isAdded}
               className={`col-span-4 text-white py-3.5 px-6 rounded-full font-semibold transition flex items-center justify-center gap-2 active:scale-95 duration-300
-                ${isAdded ? 'bg-green-600' : 'bg-primary-500 hover:bg-primary-600 shadow-lg shadow-primary-200'}`}
+                ${isAdded ? 'bg-green-600' : 'bg-primary-500 hover:bg-primary-600 shadow-lg shadow-primary-200'}
+                disabled:bg-neutral-300 disabled:shadow-none disabled:cursor-not-allowed`}
             >
-              {isAdded ? (
+              {product.stock === 0 ? (
+                'Sold Out'
+              ) : isAdded ? (
                 <>
                   <Check className="w-5 h-5" /> Added
                 </>
@@ -185,15 +242,13 @@ export const ProductDetailsPage: React.FC = () => {
                 'Add to Bag'
               )}
             </button>
-            <a 
-              href={mailtoHref}
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="col-span-1 flex items-center justify-center bg-neutral-100 rounded-full hover:bg-neutral-200 transition"
-              aria-label="Message seller"
+            <button
+                onClick={handleWishlistToggle}
+                className="col-span-1 flex items-center justify-center bg-neutral-100 rounded-full hover:bg-neutral-200 transition-transform active:scale-110"
+                aria-label="Toggle wishlist"
             >
-               <MessageCircle className="w-6 h-6 text-neutral-700" />
-            </a>
+                <Heart className={`w-6 h-6 transition-colors ${wishlisted ? 'text-red-500 fill-red-500' : 'text-neutral-700'}`} />
+            </button>
           </div>
 
           <div className="mb-8 border-t border-neutral-100 pt-6">
@@ -247,5 +302,64 @@ export const ProductDetailsPage: React.FC = () => {
         </div>
       </div>
     </div>
+    
+    {/* Reviews Section */}
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-neutral-200/80">
+            <h2 className="text-2xl font-bold mb-6">Reviews ({reviews.length})</h2>
+            
+            {/* Review Submission Form */}
+            {user ? (
+                <form onSubmit={handleReviewSubmit} className="mb-8 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+                    <h3 className="font-semibold mb-2">Leave a Review</h3>
+                    {reviewError && (
+                      <div className="flex items-start gap-2 text-xs text-red-600 mb-3 p-2 bg-red-50 rounded-md border border-red-200">
+                         <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                         <span>{reviewError}</span>
+                      </div>
+                    )}
+                    <StarRating rating={newReviewRating} onRatingChange={setNewReviewRating} isInteractive />
+                    <textarea 
+                        value={newReviewComment}
+                        onChange={(e) => setNewReviewComment(e.target.value)}
+                        placeholder="Share your thoughts on this product..."
+                        className="w-full mt-3 border border-neutral-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none transition"
+                        rows={3}
+                    />
+                    <div className="text-right mt-2">
+                        <button type="submit" disabled={isSubmittingReview} className="bg-neutral-900 text-white px-5 py-2 rounded-lg font-semibold text-sm hover:bg-neutral-800 disabled:opacity-70">
+                            {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                        </button>
+                    </div>
+                </form>
+            ) : (
+              <div className="mb-8 p-4 text-center bg-neutral-50 rounded-lg border border-neutral-200 text-sm">
+                <p>You must be <button onClick={() => navigate('/login')} className="font-semibold text-primary-600 hover:underline">logged in</button> to leave a review.</p>
+              </div>
+            )}
+            
+            {/* Reviews List */}
+            <div className="space-y-6">
+                {reviews.length > 0 ? reviews.map(review => (
+                    <div key={review.id} className="flex gap-4 border-t border-neutral-100 pt-6 first:border-t-0 first:pt-0">
+                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center font-bold text-primary-700 flex-shrink-0">
+                            {review.userName.charAt(0)}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <h4 className="font-semibold">{review.userName}</h4>
+                                <span className="text-xs text-neutral-400">{new Date(review.date).toLocaleDateString()}</span>
+                            </div>
+                            <StarRating rating={review.rating} size={16} className="my-1.5" />
+                            <p className="text-neutral-600 text-sm leading-relaxed">{review.comment}</p>
+                        </div>
+                    </div>
+                )) : (
+                    <p className="text-neutral-500 text-center py-8">No reviews yet. Be the first to share your thoughts!</p>
+                )}
+            </div>
+        </div>
+    </div>
+    </>
   );
 };

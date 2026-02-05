@@ -1,4 +1,4 @@
-import { Product, Vendor } from './types';
+import { Product, Vendor, Review } from './types';
 
 export const MOCK_VENDORS: Vendor[] = [
   {
@@ -7,7 +7,8 @@ export const MOCK_VENDORS: Vendor[] = [
     location: 'Gaborone',
     rating: 4.8,
     reviewCount: 124,
-    imageUrl: 'https://picsum.photos/seed/vendor1/800/400',
+    imageUrl: 'https://picsum.photos/seed/vendor1/400/400',
+    bannerUrl: 'https://picsum.photos/seed/vendor1-banner/1200/400',
     description: 'Authentic vintage clothing sourced locally. We specialize in 90s streetwear and unique finds.',
     joinedDate: '2023-01-15',
     verified: true
@@ -18,7 +19,8 @@ export const MOCK_VENDORS: Vendor[] = [
     location: 'Gaborone',
     rating: 4.9,
     reviewCount: 89,
-    imageUrl: 'https://picsum.photos/seed/vendor2/800/400',
+    imageUrl: 'https://picsum.photos/seed/vendor2/400/400',
+    bannerUrl: 'https://picsum.photos/seed/vendor2-banner/1200/400',
     description: 'Curated secondhand and reworked clothing. If it doesn\'t fit, we can alter it.',
     joinedDate: '2023-03-10',
     verified: true
@@ -29,7 +31,8 @@ export const MOCK_VENDORS: Vendor[] = [
     location: 'Maun (Ships country-wide)',
     rating: 4.5,
     reviewCount: 45,
-    imageUrl: 'https://picsum.photos/seed/vendor3/800/400',
+    imageUrl: 'https://picsum.photos/seed/vendor3/400/400',
+    bannerUrl: 'https://picsum.photos/seed/vendor3-banner/1200/400',
     description: 'Handcrafted accessories and bohemian-style clothing from the heart of the Delta.',
     joinedDate: '2023-06-22',
     verified: false
@@ -51,7 +54,8 @@ export const MOCK_PRODUCTS: Product[] = [
     ],
     category: 'Clothing',
     sizes: ['L', 'XL'],
-    condition: 'Good'
+    condition: 'Good',
+    stock: 5,
   },
   {
     id: 'p2',
@@ -63,7 +67,8 @@ export const MOCK_PRODUCTS: Product[] = [
     imageUrls: ['https://picsum.photos/seed/p2/600/600'],
     category: 'Clothing',
     sizes: ['M', 'L'],
-    condition: 'Like New'
+    condition: 'Like New',
+    stock: 3,
   },
   {
     id: 'p3',
@@ -75,7 +80,8 @@ export const MOCK_PRODUCTS: Product[] = [
     imageUrls: ['https://picsum.photos/seed/p3/600/600'],
     category: 'Accessories',
     sizes: ['42', '43', '44'],
-    condition: 'New'
+    condition: 'New',
+    stock: 0,
   },
   {
     id: 'p4',
@@ -89,7 +95,8 @@ export const MOCK_PRODUCTS: Product[] = [
         'https://picsum.photos/seed/p4-2/600/600'
     ],
     category: 'Accessories',
-    condition: 'New'
+    condition: 'New',
+    stock: 10,
   },
   {
     id: 'p5',
@@ -101,7 +108,8 @@ export const MOCK_PRODUCTS: Product[] = [
     imageUrls: ['https://picsum.photos/seed/p5/600/600'],
     category: 'Clothing',
     sizes: ['S', 'M', 'L'],
-    condition: 'New'
+    condition: 'New',
+    stock: 0,
   },
   {
     id: 'p6',
@@ -112,8 +120,40 @@ export const MOCK_PRODUCTS: Product[] = [
     description: 'Book a slot for resizing your clothes. Final price depends on complexity.',
     imageUrls: ['https://picsum.photos/seed/p6/600/600'],
     category: 'Services',
-    condition: 'New'
+    condition: 'New',
+    stock: 99,
   }
 ];
+
+export const MOCK_REVIEWS: Review[] = [
+    {
+        id: 'r1',
+        productId: 'p1',
+        userId: 'u1',
+        userName: 'Thabo Moeng',
+        rating: 5,
+        comment: "Absolutely love this jacket! It's exactly as described and has become a staple in my wardrobe. Fast delivery too.",
+        date: '2024-05-20T10:00:00Z',
+    },
+    {
+        id: 'r2',
+        productId: 'p1',
+        userId: 'u-test',
+        userName: 'Pula Buyer',
+        rating: 4,
+        comment: "Great quality, but it was a bit more oversized than I expected. Still, a very cool piece.",
+        date: '2024-05-18T14:30:00Z',
+    },
+    {
+        id: 'r3',
+        productId: 'p2',
+        userId: 'u-another',
+        userName: 'Sarah P.',
+        rating: 5,
+        comment: "Wore this to a wedding and got so many compliments. The craftsmanship is amazing!",
+        date: '2024-05-15T09:00:00Z',
+    }
+];
+
 
 export const CATEGORIES = ['All', 'Clothing', 'Accessories', 'Home', 'Services'];

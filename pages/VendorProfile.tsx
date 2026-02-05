@@ -12,6 +12,7 @@ export const VendorProfilePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   useEffect(() => {
     if (!vendorId) {
@@ -41,9 +42,13 @@ export const VendorProfilePage: React.FC = () => {
     loadData();
   }, [vendorId]);
 
-  const handleFollowToggle = () => {
-    // TODO Backend: POST /api/sellers/:id/follow
+  const handleFollowToggle = async () => {
+    setIsFollowLoading(true);
+    // TODO Backend: Replace with a real API call like:
+    // await api.toggleFollowVendor(vendorId);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
     setIsFollowing(prev => !prev);
+    setIsFollowLoading(false);
   }
 
   const formattedJoinedDate = vendor 
@@ -65,7 +70,7 @@ export const VendorProfilePage: React.FC = () => {
     <div className="min-h-screen bg-neutral-50 pb-12">
       <div className="h-48 md:h-64 bg-neutral-300 w-full relative">
         <img 
-          src={vendor.imageUrl.replace('/800/400', '/1200/400')}
+          src={vendor.bannerUrl}
           alt={`${vendor.name}'s cover photo`}
           className="w-full h-full object-cover"
         />
@@ -83,7 +88,7 @@ export const VendorProfilePage: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-lg border border-neutral-200/50 p-6 flex flex-col md:flex-row items-start md:items-center gap-6">
           <div className="relative flex-shrink-0">
             <img 
-              src={vendor.imageUrl.replace('/800/400', '/400/400')} 
+              src={vendor.imageUrl} 
               alt={vendor.name} 
               className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-md object-cover bg-neutral-100"
             />
@@ -119,14 +124,23 @@ export const VendorProfilePage: React.FC = () => {
           <div className="w-full md:w-auto flex flex-col md:items-end gap-2 self-start md:self-center">
             <button 
               onClick={handleFollowToggle}
-              className={`w-full md:w-auto px-6 py-2 rounded-full font-semibold transition text-sm flex items-center justify-center gap-1.5
-                ${isFollowing 
+              disabled={isFollowLoading}
+              className={`w-full md:w-auto px-6 py-2 rounded-full font-semibold transition text-sm flex items-center justify-center gap-1.5 disabled:opacity-70
+                ${isFollowing && !isFollowLoading
                   ? 'bg-neutral-200 text-neutral-800' 
                   : 'bg-neutral-900 text-white hover:bg-neutral-800'}`
                 }
             >
-              {isFollowing && <Check className="w-4 h-4" />}
-              {isFollowing ? 'Following' : 'Follow'}
+              {isFollowLoading ? (
+                '...'
+              ) : isFollowing ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Following</span>
+                </>
+              ) : (
+                'Follow'
+              )}
             </button>
           </div>
         </div>

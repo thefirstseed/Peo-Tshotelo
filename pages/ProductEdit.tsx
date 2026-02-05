@@ -59,17 +59,24 @@ export const ProductEditPage: React.FC = () => {
   const isEditing = !!productId;
 
   const [formData, setFormData] = useState<Omit<Product, 'id' | 'vendorId' | 'vendorName'>>({
-    title: '', price: 0, description: '', category: 'Clothing', imageUrls: [], condition: 'Like New', sizes: []
+    title: '', price: 0, description: '', category: 'Clothing', imageUrls: [], condition: 'Like New', sizes: [], stock: 1
   });
   const [priceInput, setPriceInput] = useState(''); // State for the price text input
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(isEditing); // Only load if editing
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (productId) {
+    // Redirect if user is not a fully onboarded seller and is trying to create a new product.
+    if (!isEditing && user && !user.vendorId) {
+        navigate('/sell');
+        return;
+    }
+    
+    if (isEditing && productId) {
       setIsLoading(true);
       fetchProduct(productId)
         .then(product => {
@@ -84,20 +91,30 @@ export const ProductEditPage: React.FC = () => {
             category: product.category,
             imageUrls: product.imageUrls,
             condition: product.condition || 'Good',
-            sizes: product.sizes || []
+            sizes: product.sizes || [],
+            stock: product.stock,
           });
           // Sync the text input with the fetched price
           setPriceInput(product.price > 0 ? product.price.toString() : '');
         })
-        .catch(() => setError("Could not find the product to edit."))
+        .catch((err) => {
+            console.error(err);
+            setError("Could not find the product to edit.");
+        })
         .finally(() => setIsLoading(false));
     }
-  }, [productId, user?.vendorId]);
+  }, [productId, user, isEditing]);
 
   // Generic handler for most form inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (e.target.type === 'number') {
+      // Ensure non-negative integers for stock
+      const numValue = Math.max(0, parseInt(value, 10) || 0);
+      setFormData(prev => ({ ...prev, [name]: numValue }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   // Specific handler for the price input to manage text and number states
@@ -126,29 +143,34 @@ export const ProductEditPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.vendorId) {
+        setSaveError("Cannot save product: your seller profile is not complete.");
+        return;
+    }
+    setSaveError(null);
     if (formData.imageUrls.length === 0 && newImageFiles.length === 0) {
-        alert('Please add at least one product image.');
+        setSaveError('Please add at least one product image.');
         return;
     }
     
     setIsSaving(true);
     try {
-      // TODO Backend: POST /api/products (new) or PUT /api/products/:id (edit)
-      // The backend will receive a multipart/form-data request.
-      // It should process the `newImageFiles` array for uploads,
-      // and use the `formData.imageUrls` array to manage existing images.
-      await createOrUpdateProduct(formData, newImageFiles, productId);
+      await createOrUpdateProduct(formData, newImageFiles, user.vendorId, productId);
       setTimeout(() => {
         setIsSaving(false);
         navigate('/dashboard');
       }, 1500); // Wait for the "Saved" animation to finish
     } catch (err) {
-      alert("Failed to save product.");
-      console.error(err);
+      setSaveError("Failed to save product. Please check your connection and try again.");
+      console.error("Save product failed:", err);
       setIsSaving(false);
     }
   };
-
+  
+  // Render a redirecting message if user is not an onboarded seller trying to create a product
+  if (!isEditing && user && !user.vendorId) {
+    return <div className="text-center py-10">Redirecting to seller setup...</div>;
+  }
   if (isLoading) return <div className="text-center py-10">Loading product...</div>
   if (error) return <div className="text-center py-10 text-red-500">{error}</div>
 
@@ -166,6 +188,7 @@ export const ProductEditPage: React.FC = () => {
       </div>
       
       <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-neutral-200/80">
+        {saveError && <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm mb-6">{saveError}</div>}
         <div className="space-y-6">
             <ImageUploader
                 onUpdate={handleImageUpdate}
@@ -199,20 +222,36 @@ export const ProductEditPage: React.FC = () => {
                 selected={formData.sizes!}
                 onToggle={handleSizeToggle}
             />
-            <div>
-                <label htmlFor="price" className="block text-sm font-medium text-neutral-700 mb-1">Price (Pula)</label>
-                <div className="relative">
-                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">P</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label htmlFor="price" className="block text-sm font-medium text-neutral-700 mb-1">Price (Pula)</label>
+                    <div className="relative">
+                        <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">P</span>
+                        <input 
+                            type="text" 
+                            inputMode="decimal"
+                            name="price" 
+                            id="price" 
+                            required 
+                            value={priceInput} 
+                            onChange={handlePriceChange} 
+                            placeholder="0.00" 
+                            className={`${inputStyles} pl-8`}
+                        />
+                    </div>
+                </div>
+                <div>
+                    <label htmlFor="stock" className="block text-sm font-medium text-neutral-700 mb-1">Stock Quantity</label>
                     <input 
-                        type="text" 
-                        inputMode="decimal"
-                        name="price" 
-                        id="price" 
+                        type="number" 
+                        name="stock" 
+                        id="stock" 
                         required 
-                        value={priceInput} 
-                        onChange={handlePriceChange} 
-                        placeholder="0.00" 
-                        className={`${inputStyles} pl-8`}
+                        value={formData.stock} 
+                        onChange={handleChange} 
+                        min="0"
+                        placeholder="e.g. 1" 
+                        className={inputStyles}
                     />
                 </div>
             </div>

@@ -1,12 +1,17 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { ArrowLeft, User, ChevronRight, Store, CreditCard, Shield, MapPin, Heart } from 'lucide-react';
 import { navigate } from '../router';
-import { ChevronRight, Heart, MapPin, Settings, HelpCircle, Store } from 'lucide-react';
 
-const ProfileMenuItem: React.FC<{icon: React.ElementType, label: string, onClick?: () => void}> = ({ icon: Icon, label, onClick }) => (
-    <button onClick={onClick} className="w-full flex items-center text-left p-4 bg-white hover:bg-neutral-50 transition">
-        <Icon className="w-6 h-6 text-neutral-500 mr-4" />
-        <span className="flex-1 font-medium text-neutral-800">{label}</span>
+const SettingsLink: React.FC<{ title: string; description: string; icon: React.ElementType; onClick: () => void; }> = ({ title, description, icon: Icon, onClick }) => (
+    <button onClick={onClick} className="w-full flex items-center text-left p-4 hover:bg-neutral-50 rounded-lg transition-colors">
+        <div className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center mr-4">
+            <Icon className="w-5 h-5 text-neutral-600" />
+        </div>
+        <div className="flex-1">
+            <h3 className="font-semibold text-neutral-800">{title}</h3>
+            <p className="text-sm text-neutral-500">{description}</p>
+        </div>
         <ChevronRight className="w-5 h-5 text-neutral-400" />
     </button>
 );
@@ -15,56 +20,94 @@ export const ProfileSettingsPage: React.FC = () => {
     const { user } = useAuth();
 
     if (!user) {
-        return <div className="text-center py-20">Loading profile...</div>;
+        navigate('/login');
+        return null;
     }
 
     return (
-        <div className="max-w-md mx-auto bg-neutral-100 min-h-screen">
-            <div className="bg-white pt-8 pb-6 text-center">
-                 <h1 className="text-xl font-bold mb-6">Profile</h1>
-                <img
-                    // Replace with a dynamic user avatar if available in the future
-                    src={`https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(user.name)}`}
-                    alt="User Avatar"
-                    className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-neutral-200"
-                />
-                <h2 className="text-xl font-bold text-neutral-900">{user.name}</h2>
-                <p className="text-neutral-500 text-sm">{user.email}</p>
-                <button 
-                    onClick={() => navigate('/settings')}
-                    className="mt-4 px-6 py-2 border border-primary-500 text-primary-600 font-semibold rounded-full text-sm hover:bg-primary-50 transition"
-                >
-                    Edit Profile
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex items-center gap-4 mb-8">
+                <button onClick={() => navigate('/')} className="p-2 hover:bg-neutral-100 rounded-full">
+                    <ArrowLeft className="w-5 h-5" />
                 </button>
+                <div>
+                    <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">Account Settings</h1>
+                    <p className="text-neutral-500 mt-1">Manage your personal info, payments, and account security.</p>
+                </div>
             </div>
-            
-            <div className="py-6 px-4">
-                {user.role === 'buyer' && (
-                    <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4 mb-6">
-                        <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                            <Store className="w-6 h-6 text-primary-600" />
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-neutral-800">Start Selling</h3>
-                            <p className="text-sm text-neutral-500">Turn your products into profit.</p>
-                        </div>
-                        <button 
-                            onClick={() => navigate('/sell')}
-                            className="bg-primary-500 text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-primary-600 transition"
-                        >
-                            Become a Vendor
-                        </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+                {/* Personal Info Section */}
+                <div>
+                    <h2 className="text-lg font-bold text-neutral-900 px-4 mb-2">Personal Info</h2>
+                    <div className="bg-white py-2 px-1 rounded-2xl shadow-sm border border-neutral-200/80 space-y-1">
+                        <SettingsLink 
+                            title="Personal information" 
+                            description="Update your name and contact details."
+                            icon={User}
+                            onClick={() => navigate('/settings/personal-info')}
+                        />
+                        <SettingsLink 
+                            title="Sign-in and security" 
+                            description="Change your password."
+                            icon={Shield}
+                            onClick={() => navigate('/settings/security')}
+                        />
+                        <SettingsLink 
+                            title="Addresses" 
+                            description="Manage shipping addresses."
+                            icon={MapPin}
+                            onClick={() => navigate('/settings/addresses')}
+                        />
                     </div>
+                </div>
+
+                {/* Payment Information Section */}
+                 <div>
+                    <h2 className="text-lg font-bold text-neutral-900 px-4 mb-2">Payment Information</h2>
+                     <div className="bg-white py-2 px-1 rounded-2xl shadow-sm border border-neutral-200/80 space-y-1">
+                        {user.role === 'seller' ? (
+                            <SettingsLink 
+                                title="Payouts" 
+                                description="Manage your payout methods."
+                                icon={CreditCard}
+                                onClick={() => navigate('/settings/payouts')}
+                            />
+                        ) : (
+                             <SettingsLink 
+                                title="Payments" 
+                                description="Manage saved cards for checkout."
+                                icon={CreditCard}
+                                onClick={() => navigate('/settings/payments')}
+                            />
+                        )}
+                    </div>
+                </div>
+
+                {user.role === 'seller' && (
+                  <div>
+                      <h2 className="text-lg font-bold text-neutral-900 px-4 mb-2">Seller Tools</h2>
+                       <div className="bg-white py-2 px-1 rounded-2xl shadow-sm border border-neutral-200/80 space-y-1">
+                          <SettingsLink 
+                              title="Storefront" 
+                              description="Customize your public shop page."
+                              icon={Store}
+                              onClick={() => navigate('/settings/storefront')}
+                          />
+                      </div>
+                  </div>
                 )}
 
-                <div className="rounded-xl shadow-sm overflow-hidden border border-neutral-200/80">
-                    <ProfileMenuItem icon={Heart} label="Favorites" onClick={() => alert('Feature coming soon!')} />
-                    <div className="h-px bg-neutral-200" />
-                    <ProfileMenuItem icon={MapPin} label="Delivery Addresses" onClick={() => navigate('/settings')} />
-                    <div className="h-px bg-neutral-200" />
-                    <ProfileMenuItem icon={Settings} label="Settings" onClick={() => navigate('/settings')} />
-                    <div className="h-px bg-neutral-200" />
-                    <ProfileMenuItem icon={HelpCircle} label="Help & Support" onClick={() => alert('Feature coming soon!')} />
+                 <div>
+                    <h2 className="text-lg font-bold text-neutral-900 px-4 mb-2">My Activity</h2>
+                     <div className="bg-white py-2 px-1 rounded-2xl shadow-sm border border-neutral-200/80 space-y-1">
+                         <SettingsLink 
+                            title="Wishlist" 
+                            description="View your saved items."
+                            icon={Heart}
+                            onClick={() => navigate('/wishlist')}
+                        />
+                    </div>
                 </div>
             </div>
         </div>

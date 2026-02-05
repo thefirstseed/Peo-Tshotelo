@@ -11,11 +11,27 @@ interface UserWithPassword extends User {
 // TODO Backend: Store JWT in httpOnly cookie, refresh on page load
 // 1. A mock user database is now managed directly within the context.
 const MOCK_USERS: UserWithPassword[] = [
-  { id: 'u1', name: 'Thabo Moeng', email: 'thabo@email.com', password: 'password123', role: 'buyer', address: { street: '123 Main Road', city: 'Gaborone', country: 'Botswana' } },
-  { id: 'u2', name: 'Kagiso Dlamini', email: 'kagiso@email.com', password: 'password123', role: 'seller', vendorId: 'v2' },
+  { 
+    id: 'u1', name: 'Thabo Moeng', email: 'thabo@email.com', password: 'password123', role: 'buyer', 
+    address: { street: '123 Main Road', city: 'Gaborone', country: 'Botswana' },
+    emailVerified: false,
+    phone: { number: '72 123 456', verified: true },
+    identity: { nationality: 'Motswana', dateOfBirth: '1990-05-15', idType: 'Omang', idNumber: '••••••••123' }
+  },
+  { 
+    id: 'u2', name: 'Kagiso Dlamini', email: 'kagiso@email.com', password: 'password123', role: 'seller', vendorId: 'v2',
+    emailVerified: true,
+    phone: { number: '71 987 654', verified: true },
+    bankDetails: { bankName: 'FNB Botswana', accountHolder: 'Kagiso Dlamini', accountNumber: '62801234567', branchCode: '282067' },
+    mobileMoneyDetails: { provider: 'Orange Money', name: 'K Dlamini', number: '72000111' }
+  },
   // Users for the demo login buttons
-  { id: 'user1', name: 'Thrifty Gabs', email: 'seller@kulture.com', password: 'password', role: 'seller', vendorId: 'v1' },
-  { id: 'user2', name: 'Pula Buyer', email: 'buyer@kulture.com', password: 'password', role: 'buyer' },
+  { 
+    id: 'user1', name: 'Thrifty Gabs', email: 'seller@kulture.com', password: 'password', role: 'seller', vendorId: 'v1',
+    emailVerified: true,
+    bankDetails: { bankName: 'Stanbic Bank', accountHolder: 'Thrifty Gabs Store', accountNumber: '9060001234567', branchCode: '062167' }
+  },
+  { id: 'user2', name: 'Pula Buyer', email: 'buyer@kulture.com', password: 'password', role: 'buyer', emailVerified: true },
 ];
 
 interface AuthContextType {
@@ -25,7 +41,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string, role?: 'buyer' | 'seller') => Promise<void>;
   logout: () => void;
   updateUser: (updatedDetails: Partial<User>) => Promise<void>;
-  upgradeToSeller: () => Promise<void>;
+  completeSellerOnboarding: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       password,
       role,
+      emailVerified: false,
     };
     
     // Add the new user to our in-memory DB
@@ -98,24 +115,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   };
 
-  const upgradeToSeller = async () => {
-    if (!user || user.role === 'seller') return;
+  const completeSellerOnboarding = async () => {
+    if (!user) return;
     
     setIsLoading(true);
     await new Promise(r => setTimeout(r, 600)); // Simulate network delay
 
-    const newVendorId = 'v' + Date.now();
-    const updatedUser = { ...user, role: 'seller' as const, vendorId: newVendorId };
+    const vendorId = user.vendorId || 'v' + Date.now();
+    const updatedUser = { ...user, role: 'seller' as const, vendorId };
 
     setUsersDB(prevDb => prevDb.map(dbUser => 
-        dbUser.id === user.id ? { ...dbUser, role: 'seller', vendorId: newVendorId } : dbUser
+        dbUser.id === user.id ? { ...dbUser, role: 'seller' as const, vendorId } : dbUser
     ));
     
     setUser(updatedUser);
     setIsLoading(false);
   };
   
-  const value = { user, isLoading, login, register, logout, updateUser, upgradeToSeller };
+  const value = { user, isLoading, login, register, logout, updateUser, completeSellerOnboarding };
 
   // App is always ready to render, no initial loading from storage.
   return (

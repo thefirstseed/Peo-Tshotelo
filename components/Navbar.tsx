@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShoppingBag, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, Settings } from 'lucide-react';
+import { ShoppingBag, Heart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, Settings } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { navigate } from '../router';
+import { useWishlist } from '../hooks/useWishlist';
 
 const UserMenu: React.FC = () => {
     const { user, logout } = useAuth();
@@ -52,7 +53,7 @@ const UserMenu: React.FC = () => {
 
 export const Navbar: React.FC = () => {
   const { totalItems } = useCart();
-  // FIX: Destructured `logout` from `useAuth` to make it available for the mobile menu's logout button.
+  const { wishlistCount } = useWishlist();
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -109,7 +110,7 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Right Side Actions (Desktop) */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2">
             {user ? (
               <UserMenu />
             ) : (
@@ -121,8 +122,21 @@ export const Navbar: React.FC = () => {
               </div>
             )}
 
-            <div className="w-px h-6 bg-neutral-200" />
+            <div className="w-px h-6 bg-neutral-200 ml-2" />
             
+            <button 
+              onClick={() => handleNavLinkClick('/wishlist')}
+              className="relative p-2 hover:bg-neutral-100 rounded-full transition"
+              aria-label="Wishlist"
+            >
+              <Heart className="w-6 h-6 text-neutral-800" />
+              {wishlistCount > 0 && (
+                <span className="absolute top-1 right-1 bg-primary-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                  {wishlistCount}
+                </span>
+              )}
+            </button>
+
             <button 
               onClick={() => handleNavLinkClick('/cart')} 
               className="relative p-2 hover:bg-neutral-100 rounded-full transition"
@@ -138,7 +152,19 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile Menu Button & Cart*/}
-          <div className="md:hidden flex items-center gap-2">
+          <div className="md:hidden flex items-center gap-1">
+             <button
+                onClick={() => handleNavLinkClick('/wishlist')}
+                className="relative p-2 hover:bg-neutral-100 rounded-full transition"
+                aria-label="Wishlist"
+             >
+                <Heart className="w-6 h-6 text-neutral-800" />
+                 {wishlistCount > 0 && (
+                  <span className="absolute top-1 right-1 bg-primary-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                    {wishlistCount}
+                  </span>
+                )}
+             </button>
              <button 
                 onClick={() => handleNavLinkClick('/cart')} 
                 className="relative p-2 hover:bg-neutral-100 rounded-full transition"

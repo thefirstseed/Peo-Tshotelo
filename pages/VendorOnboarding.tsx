@@ -36,7 +36,7 @@ const PillSelector: React.FC<{ options: string[], selected: string[], onToggle: 
 
 export const VendorOnboardingPage: React.FC = () => {
   const [step, setStep] = useState(1);
-  const { upgradeToSeller, user } = useAuth();
+  const { completeSellerOnboarding, user } = useAuth();
   const [formData, setFormData] = useState({
       // Step 1
       businessName: '', licenseNumber: '', taxId: '', ownerName: user?.name || '', ownerId: '',
@@ -45,7 +45,8 @@ export const VendorOnboardingPage: React.FC = () => {
       marketName: '', stallNumber: '', address: '', gps: '', description: '', 
       categories: [] as string[],
       // Step 3
-      bankName: '', accountHolder: '', accountNumber: '', branchCode: '', mobileMoneyProvider: '',
+      bankName: '', accountHolder: '', accountNumber: '', branchCode: '', 
+      mobileMoneyProvider: '', mobileMoneyName: '', mobileMoneyNumber: '',
       // Step 4
       licenseFile: null as File | null, idFile: null as File | null, shopPhotoFile: null as File | null,
       productPhotosFile: null as File | null, bankStatementFile: null as File | null, termsAccepted: false,
@@ -72,7 +73,7 @@ export const VendorOnboardingPage: React.FC = () => {
       setIsSubmitting(true);
       console.log('Submitting vendor application', formData);
       // TODO: Backend call to submit application
-      await upgradeToSeller();
+      await completeSellerOnboarding();
       setIsSubmitting(false);
       handleNext(); // Move to success step
   };
@@ -128,12 +129,33 @@ export const VendorOnboardingPage: React.FC = () => {
                       </div>
                   </div>
                   <h3 className="font-semibold text-neutral-800 mb-3">Mobile Money Details</h3>
-                  <div>
+                  <div className="space-y-4">
                       <PillSelector 
                           options={['Orange Money', 'Mascom MyZaka', 'BTC Smega']}
                           selected={[formData.mobileMoneyProvider]}
                           onToggle={(p) => setFormData(prev => ({...prev, mobileMoneyProvider: prev.mobileMoneyProvider === p ? '' : p}))}
                       />
+                      {formData.mobileMoneyProvider && (
+                        <div className="space-y-4 pt-2">
+                            <IconInput 
+                                icon={UserIcon} 
+                                name="mobileMoneyName" 
+                                placeholder="Account Holder Name *" 
+                                required 
+                                onChange={handleChange} 
+                                value={formData.mobileMoneyName}
+                            />
+                            <IconInput 
+                                icon={Phone} 
+                                name="mobileMoneyNumber" 
+                                type="tel"
+                                placeholder="Mobile Number *" 
+                                required 
+                                onChange={handleChange} 
+                                value={formData.mobileMoneyNumber}
+                            />
+                        </div>
+                      )}
                   </div>
               </div>
           );

@@ -1,40 +1,110 @@
-import React, { useState } from 'react';
-import { Trash2, ArrowLeft, ShoppingBag, CheckCircle, AlertTriangle } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Trash2, ArrowLeft, ShoppingBag, CheckCircle, AlertTriangle, CreditCard, Smartphone, User, Calendar, Lock } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { navigate } from '../router';
+import { processPayment } from '../api/api';
+
 
 export const CartPage: React.FC = () => {
   const { cartItems, removeFromCart, updateCartQuantity, clearCart, totalPrice } = useCart();
   const { user } = useAuth();
+  
+  const [checkoutStep, setCheckoutStep] = useState<'cart' | 'payment' | 'success'>('cart');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  const [deliveryAddress, setDeliveryAddress] = useState({
+    street: '',
+    city: '',
+    country: '',
+  });
+
+  // --- Payment Form State ---
+  type PaymentMethod = 'card' | 'mobile';
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [cardDetails, setCardDetails] = useState({ number: '', name: '', expiry: '', cvc: '' });
+  const [mobileDetails, setMobileDetails] = useState({ provider: '', number: '' });
+
+
+  // Pre-fill address from user profile when component loads or user changes
+  useEffect(() => {
+    if (user && user.role === 'buyer' && user.address) {
+        setDeliveryAddress({
+            street: user.address.street || '',
+            city: user.address.city || '',
+            country: user.address.country || '',
+        });
+    }
+  }, [user]);
+
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setDeliveryAddress(prev => ({ ...prev, [name]: value }));
+  };
 
   const subtotal = totalPrice;
   const shippingFee = 0; // As per spec, shipping is free.
   const total = subtotal + shippingFee;
-  const isAddressMissing = user && user.role === 'buyer' && !user.address;
+  const isAddressComplete = user?.role === 'buyer' && deliveryAddress.street.trim() && deliveryAddress.city.trim() && deliveryAddress.country.trim();
 
-  const handleCheckout = () => {
-    if (!user) {
-      navigate('/login');
-      return;
+  // --- Payment Form Logic ---
+  const handleCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let { name, value } = e.target;
+    if (name === 'number') {
+        value = value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
     }
-    if (isAddressMissing) {
-      alert("Please add a shipping address in your profile before checking out.");
-      navigate('/profile');
-      return;
+    if (name === 'expiry') {
+        value = value.replace(/\D/g, '').replace(/(\d{2})(\d{0,2})/, '$1 / $2').trim().slice(0, 7);
     }
-    setIsProcessing(true);
-    // TODO Backend: Replace mock with POST /api/orders + real payment integration (Stripe/PayFast)
-    setTimeout(() => {
-      setIsProcessing(false);
-      clearCart();
-      setIsSuccess(true);
-    }, 2000);
+    if (name === 'cvc') {
+        value = value.replace(/\D/g, '').slice(0, 4);
+    }
+    setCardDetails(prev => ({...prev, [name]: value}));
+  };
+  
+  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setMobileDetails(prev => ({ ...prev, [name]: value }));
   };
 
-  if (isSuccess) {
+  const isCardFormValid = useMemo(() => {
+    return cardDetails.number.replace(/\s/g, '').length >= 16 &&
+           cardDetails.name.trim().length > 2 &&
+           /^\d{2}\s\/\s\d{2}$/.test(cardDetails.expiry) &&
+           cardDetails.cvc.length >= 3;
+  }, [cardDetails]);
+  
+  const isMobileFormValid = useMemo(() => {
+    return mobileDetails.provider && mobileDetails.number.trim().length > 5;
+  }, [mobileDetails]);
+
+  const canSubmit = paymentMethod === 'card' ? isCardFormValid : isMobileFormValid;
+  
+  const handlePaymentSubmit = async (paymentDetails: any) => {
+    setPaymentError(null);
+    setIsProcessing(true);
+    try {
+        await processPayment(total, { ...paymentDetails, address: deliveryAddress });
+        clearCart();
+        setCheckoutStep('success');
+    } catch (err) {
+        setPaymentError(err.message || "An unexpected error occurred. Please try again.");
+        console.error("Payment failed:", err);
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+  
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit || isProcessing) return;
+    const details = paymentMethod === 'card' ? { type: 'card', ...cardDetails } : { type: 'mobile', ...mobileDetails };
+    handlePaymentSubmit(details);
+  };
+
+
+  if (checkoutStep === 'success') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -64,6 +134,11 @@ export const CartPage: React.FC = () => {
     );
   }
 
+  const inputStyles = "w-full border border-neutral-300 rounded-lg p-3 pl-10 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none transition";
+  const buttonBase = "flex-1 text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors border";
+  const buttonActive = "bg-primary-500 text-white border-primary-500";
+  const buttonInactive = "bg-neutral-100 text-neutral-700 border-neutral-200 hover:bg-neutral-200";
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex items-center gap-4 mb-8">
@@ -75,18 +150,6 @@ export const CartPage: React.FC = () => {
 
       <div className="grid lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-4">
-          {isAddressMissing && (
-             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg flex gap-3">
-                <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div>
-                   <h4 className="font-bold text-yellow-800">Shipping Address Needed</h4>
-                   <p className="text-sm text-yellow-700 mt-1">
-                     Please add a shipping address to your profile to proceed with checkout.
-                     <button onClick={() => navigate('/profile')} className="font-semibold underline ml-1 hover:text-yellow-900">Add Address</button>
-                   </p>
-                </div>
-             </div>
-          )}
           {cartItems.map(item => (
             <div key={item.product.id} className="flex gap-4 bg-white p-4 rounded-xl border border-neutral-200/80 shadow-sm">
               <img 
@@ -124,6 +187,55 @@ export const CartPage: React.FC = () => {
               </div>
             </div>
           ))}
+
+          {user?.role === 'buyer' && (
+            <div className="bg-white p-6 rounded-xl border border-neutral-200/80 shadow-sm mt-2">
+              <h3 className="font-semibold text-neutral-900 mb-4 text-lg">Delivery Address</h3>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="street" className="block text-sm font-medium text-neutral-700 mb-1">Street Address</label>
+                  <textarea
+                    id="street"
+                    name="street"
+                    value={deliveryAddress.street}
+                    onChange={handleAddressChange}
+                    required
+                    className="w-full border border-neutral-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none transition resize-none"
+                    rows={2}
+                    placeholder="e.g. Plot 123, Main Mall"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="city" className="block text-sm font-medium text-neutral-700 mb-1">City</label>
+                    <input
+                      type="text"
+                      id="city"
+                      name="city"
+                      value={deliveryAddress.city}
+                      onChange={handleAddressChange}
+                      required
+                      className="w-full border border-neutral-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none transition"
+                      placeholder="e.g. Gaborone"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="country" className="block text-sm font-medium text-neutral-700 mb-1">Country</label>
+                    <input
+                      type="text"
+                      id="country"
+                      name="country"
+                      value={deliveryAddress.country}
+                      onChange={handleAddressChange}
+                      required
+                      className="w-full border border-neutral-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none transition"
+                      placeholder="e.g. Botswana"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-1">
@@ -143,13 +255,90 @@ export const CartPage: React.FC = () => {
                 <span>P {total.toFixed(2)}</span>
               </div>
             </div>
-            <button 
-              onClick={handleCheckout}
-              disabled={isProcessing || isAddressMissing}
-              className="w-full mt-6 bg-primary-500 text-white py-3 rounded-full font-semibold hover:bg-primary-600 transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isProcessing ? 'Processing...' : (user ? 'Confirm & Checkout' : 'Login to Checkout')}
-            </button>
+             {!isAddressComplete && user?.role === 'buyer' && (
+              <div className="flex items-start gap-2 text-xs text-orange-600 mt-4 p-2 bg-orange-50 rounded-md border border-orange-200">
+                 <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                 <span>Please complete your delivery address to proceed to payment.</span>
+              </div>
+            )}
+            
+            {/* Payment form appears after address is complete */}
+            {isAddressComplete && user?.role === 'buyer' ? (
+                <div className="mt-6 border-t pt-6">
+                    <form onSubmit={handleFormSubmit}>
+                      <h3 className="font-semibold text-neutral-900 mb-4 text-lg">Payment Details</h3>
+                      <div className="flex gap-2 mb-4">
+                        <button type="button" onClick={() => setPaymentMethod('card')} className={`${buttonBase} ${paymentMethod === 'card' ? buttonActive : buttonInactive}`}>Credit Card</button>
+                        <button type="button" onClick={() => setPaymentMethod('mobile')} className={`${buttonBase} ${paymentMethod === 'mobile' ? buttonActive : buttonInactive}`}>Mobile Money</button>
+                      </div>
+
+                      {paymentMethod === 'card' ? (
+                        <div className="space-y-3">
+                          <div className="relative">
+                            <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                            <input type="text" name="number" placeholder="Card Number" value={cardDetails.number} onChange={handleCardChange} maxLength={19} required className={inputStyles} autoComplete="cc-number" />
+                          </div>
+                           <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                            <input type="text" name="name" placeholder="Cardholder Name" value={cardDetails.name} onChange={handleCardChange} required className={inputStyles} autoComplete="cc-name" />
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="relative w-1/2">
+                              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                              <input type="text" name="expiry" placeholder="MM / YY" value={cardDetails.expiry} onChange={handleCardChange} required className={inputStyles} autoComplete="cc-exp" />
+                            </div>
+                            <div className="relative w-1/2">
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                              <input type="text" name="cvc" placeholder="CVC" value={cardDetails.cvc} onChange={handleCardChange} maxLength={4} required className={inputStyles} autoComplete="cc-csc" />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                            <div className="flex gap-2">
+                                {['Orange Money', 'MyZaka'].map(p => (
+                                    <button 
+                                        key={p} 
+                                        type="button" 
+                                        onClick={() => setMobileDetails(prev => ({...prev, provider: p}))}
+                                        className={`flex-1 text-xs py-2 rounded-md border ${mobileDetails.provider === p ? 'bg-orange-500 text-white border-orange-500' : 'bg-white border-neutral-300'}`}
+                                    >
+                                        {p}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="relative">
+                                <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                                <input type="tel" name="number" placeholder="Phone Number" value={mobileDetails.number} onChange={handleMobileChange} required className={inputStyles} />
+                            </div>
+                        </div>
+                      )}
+
+                       {paymentError && (
+                            <div className="flex items-start gap-2 text-xs text-red-600 mt-4 p-2 bg-red-50 rounded-md border border-red-200">
+                                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>{paymentError}</span>
+                            </div>
+                        )}
+
+                      <button
+                        type="submit"
+                        disabled={!canSubmit || isProcessing}
+                        className="w-full mt-6 bg-primary-500 text-white py-3 rounded-full font-semibold hover:bg-primary-600 transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {isProcessing ? 'Processing...' : `Pay P ${total.toFixed(2)}`}
+                      </button>
+                      <p className="text-xs text-neutral-400 text-center mt-2 flex items-center justify-center gap-1"><Lock className="w-3 h-3"/> Payments are secure and encrypted.</p>
+                    </form>
+                </div>
+            ) : !user ? (
+                 <button 
+                    onClick={() => navigate('/login')}
+                    className="w-full mt-6 bg-primary-500 text-white py-3 rounded-full font-semibold hover:bg-primary-600 transition"
+                >
+                    Login to Checkout
+                </button>
+            ): null}
           </div>
         </div>
       </div>

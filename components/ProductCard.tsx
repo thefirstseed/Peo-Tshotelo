@@ -1,15 +1,28 @@
 import React from 'react';
 import { Product } from '../types';
-import { MapPin } from 'lucide-react';
+import { MapPin, Heart } from 'lucide-react';
 import { navigate } from '../router';
+import { useWishlist } from '../hooks/useWishlist';
 
 interface ProductCardProps {
   product: Product;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
+  const wishlisted = isWishlisted(product.id);
+
   const handleClick = () => {
     navigate(`/products/${product.id}`);
+  };
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigation when clicking the heart
+    if (wishlisted) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
   };
 
   return (
@@ -21,9 +34,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <img 
           src={product.imageUrls[0] || 'https://picsum.photos/seed/placeholder/600/600'} 
           alt={product.title} 
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${product.stock === 0 ? 'grayscale' : ''}`}
         />
-        {product.condition === 'New' && (
+        
+        {product.stock === 0 && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <span className="bg-white text-neutral-800 text-xs font-bold px-3 py-1.5 rounded-sm uppercase tracking-wider">
+              Sold Out
+            </span>
+          </div>
+        )}
+
+        <button 
+          onClick={handleWishlistToggle}
+          className="absolute top-2.5 right-2.5 bg-white/70 backdrop-blur-sm p-2 rounded-full z-10 hover:bg-white transition-transform duration-200 active:scale-125"
+          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          <Heart 
+            className={`w-5 h-5 transition-all ${wishlisted ? 'text-red-500 fill-red-500' : 'text-neutral-600'}`} 
+          />
+        </button>
+
+        {product.condition === 'New' && product.stock > 0 && (
           <span className="absolute top-2.5 left-2.5 bg-neutral-900 text-white text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-wider">
             New
           </span>

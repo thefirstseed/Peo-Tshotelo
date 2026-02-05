@@ -1,14 +1,12 @@
 import React from 'react';
 import { Navbar } from './components/Navbar';
 import { Router, Route } from './router';
-import { useAuth } from './hooks/useAuth';
 
 // Import Pages
 import { HomePage } from './pages/Home';
 import { ProductDetailsPage } from './pages/ProductDetails';
 import { CartPage } from './pages/Cart';
 import { VendorProfilePage } from './pages/VendorProfile';
-import { VendorOnboardingPage } from './pages/VendorOnboarding';
 import { SellerDashboardPage } from './pages/SellerDashboard';
 import { ProductEditPage } from './pages/ProductEdit';
 import { LoginPage } from './pages/Login';
@@ -16,11 +14,16 @@ import { RegisterPage } from './pages/Register';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { OurStoryPage } from './pages/OurStory';
 import { ProfileSettingsPage } from './pages/ProfileSettings';
-import { SettingsPage } from './pages/SettingsPage';
+import { WishlistPage } from './pages/WishlistPage';
+import { StorefrontSettingsPage } from './pages/StorefrontSettings';
+import { PayoutSettingsPage } from './pages/PayoutSettings';
+import { SellPage } from './pages/Sell';
+import { EditProfilePage } from './pages/EditProfilePage';
+import { AddressesPage } from './pages/AddressesPage';
+import { SignInAndSecurityPage } from './pages/SignInAndSecurityPage';
+import { BuyerPaymentsPage } from './pages/BuyerPaymentsPage';
 
 export default function App() {
-  const { user } = useAuth();
-  
   return (
     <div className="min-h-screen bg-neutral-100 flex flex-col font-sans text-neutral-800">
       <Navbar />
@@ -46,7 +49,13 @@ export default function App() {
           <Route path="/login" component={LoginPage} />
           <Route path="/register" component={RegisterPage} />
           <Route path="/our-story" component={OurStoryPage} />
-          <Route path="/sell" component={user?.role === 'seller' ? SellerDashboardPage : VendorOnboardingPage} />
+          
+          {/* The /sell route is now protected and uses a controller to determine the correct page */}
+          <Route path="/sell" component={() => (
+            <ProtectedRoute roles={['buyer', 'seller']}>
+              <SellPage />
+            </ProtectedRoute>
+          )} />
           
           {/* Protected Routes */}
           <Route path="/dashboard" component={() => (
@@ -59,9 +68,39 @@ export default function App() {
               <ProfileSettingsPage />
             </ProtectedRoute>
           )} />
-          <Route path="/settings" component={() => (
+           <Route path="/settings/personal-info" component={() => (
             <ProtectedRoute roles={['seller', 'buyer']}>
-              <SettingsPage />
+              <EditProfilePage />
+            </ProtectedRoute>
+          )} />
+           <Route path="/settings/addresses" component={() => (
+            <ProtectedRoute roles={['seller', 'buyer']}>
+              <AddressesPage />
+            </ProtectedRoute>
+          )} />
+           <Route path="/settings/security" component={() => (
+            <ProtectedRoute roles={['seller', 'buyer']}>
+              <SignInAndSecurityPage />
+            </ProtectedRoute>
+          )} />
+           <Route path="/settings/payments" component={() => (
+            <ProtectedRoute roles={['buyer']}>
+              <BuyerPaymentsPage />
+            </ProtectedRoute>
+          )} />
+          <Route path="/wishlist" component={() => (
+            <ProtectedRoute roles={['seller', 'buyer']}>
+              <WishlistPage />
+            </ProtectedRoute>
+          )} />
+           <Route path="/settings/storefront" component={() => (
+            <ProtectedRoute roles={['seller']}>
+              <StorefrontSettingsPage />
+            </ProtectedRoute>
+          )} />
+           <Route path="/settings/payouts" component={() => (
+            <ProtectedRoute roles={['seller']}>
+              <PayoutSettingsPage />
             </ProtectedRoute>
           )} />
           
