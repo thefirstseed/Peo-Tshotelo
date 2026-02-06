@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { ArrowLeft, User, ChevronRight, Store, CreditCard, Shield, MapPin, Heart } from 'lucide-react';
+import { ArrowLeft, User, ChevronRight, Store, CreditCard, Shield, MapPin, Heart, ShoppingBag } from 'lucide-react';
 import { navigate } from '../router';
 
 const SettingsLink: React.FC<{ title: string; description: string; icon: React.ElementType; onClick: () => void; }> = ({ title, description, icon: Icon, onClick }) => (
@@ -101,6 +101,14 @@ export const ProfileSettingsPage: React.FC = () => {
                  <div>
                     <h2 className="text-lg font-bold text-neutral-900 px-4 mb-2">My Activity</h2>
                      <div className="bg-white py-2 px-1 rounded-2xl shadow-sm border border-neutral-200/80 space-y-1">
+                         {user.role === 'buyer' && (
+                           <SettingsLink 
+                                title="Purchase History" 
+                                description="View your past orders."
+                                icon={ShoppingBag}
+                                onClick={() => navigate('/settings/history')}
+                            />
+                         )}
                          <SettingsLink 
                             title="Wishlist" 
                             description="View your saved items."

@@ -3,6 +3,7 @@ import { Product } from '../types';
 import { MapPin, Heart } from 'lucide-react';
 import { navigate } from '../router';
 import { useWishlist } from '../hooks/useWishlist';
+import { useAuth } from '../hooks/useAuth';
 
 interface ProductCardProps {
   product: Product;
@@ -10,6 +11,7 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
+  const { user } = useAuth();
   const wishlisted = isWishlisted(product.id);
 
   const handleClick = () => {
@@ -18,6 +20,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation when clicking the heart
+    if (!user) {
+        navigate('/login');
+        return;
+    }
     if (wishlisted) {
       removeFromWishlist(product.id);
     } else {

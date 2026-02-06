@@ -26,8 +26,10 @@ export interface Product {
 }
 
 export interface CartItem {
+  id: string; // Unique identifier for the cart item (e.g., product.id + size)
   product: Product;
   quantity: number;
+  size?: string;
 }
 
 // Represents a product review
@@ -76,6 +78,27 @@ export interface User {
     number: string;
   }
 }
+
+// --- Order related types ---
+export interface OrderItem {
+  product: Product;
+  quantity: number;
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  date: string; // ISO 8601
+  items: OrderItem[];
+  totalAmount: number;
+  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  shippingAddress: {
+    street: string;
+    city: string;
+    country: string;
+  };
+}
+
 
 // ViewState is no longer needed for routing, but might be useful for other UI states.
 // For now, it's removed to reflect the new routing architecture.

@@ -3,7 +3,7 @@ import { navigate } from '../router';
 import { useAuth } from '../hooks/useAuth';
 import { IconInput } from '../components/forms/IconInput';
 import { FileUpload } from '../components/forms/FileUpload';
-import { ArrowLeft, Store, Building, Shield, FileText, User as UserIcon, Mail, Phone, MapPin, Hash, BookText, Banknote, CreditCard, Wallet, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Store, Building, Shield, FileText, User as UserIcon, Mail, Phone, MapPin, Hash, BookText, Banknote, CreditCard, Wallet, CheckCircle, Calendar, Globe } from 'lucide-react';
 
 const ProgressBar: React.FC<{ currentStep: number; totalSteps: number }> = ({ currentStep, totalSteps }) => (
   <div className="relative mb-8 h-1 w-full bg-neutral-200 rounded-full">
@@ -14,7 +14,7 @@ const ProgressBar: React.FC<{ currentStep: number; totalSteps: number }> = ({ cu
   </div>
 );
 
-const PillSelector: React.FC<{ options: string[], selected: string[], onToggle: (value: string) => void }> = ({ options, selected, onToggle }) => (
+const PillSelector: React.FC<{ options: string[], selected: string | string[], onToggle: (value: string) => void }> = ({ options, selected, onToggle }) => (
     <div className="flex flex-wrap gap-2">
       {options.map(option => (
         <button
@@ -22,7 +22,7 @@ const PillSelector: React.FC<{ options: string[], selected: string[], onToggle: 
           type="button"
           onClick={() => onToggle(option)}
           className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
-            selected.includes(option)
+            (Array.isArray(selected) && selected.includes(option)) || selected === option
             ? 'bg-primary-500 text-white' 
             : 'bg-neutral-100 border border-neutral-200 text-neutral-700 hover:bg-neutral-200'
           }`}
@@ -36,13 +36,21 @@ const PillSelector: React.FC<{ options: string[], selected: string[], onToggle: 
 
 export const VendorOnboardingPage: React.FC = () => {
   const [step, setStep] = useState(1);
-  const { completeSellerOnboarding, user } = useAuth();
+  const { completeSellerOnboarding, user, updateUser } = useAuth();
   const [formData, setFormData] = useState({
-      // Step 1
-      businessName: '', licenseNumber: '', taxId: '', ownerName: user?.name || '', ownerId: '',
-      email: user?.email || '', phone: '', altPhone: '',
+      // Step 1 - Business
+      businessName: '', licenseNumber: '', taxId: '',
+      // Step 1 - Personal
+      ownerName: user?.name || '',
+      phone: user?.phone?.number || '',
+      email: user?.email || '',
+      address: '',
+      nationality: '',
+      dateOfBirth: '',
+      idType: '',
+      ownerId: '',
       // Step 2
-      marketName: '', stallNumber: '', address: '', gps: '', description: '', 
+      marketName: '', stallNumber: '', locationAddress: '', description: '', 
       categories: [] as string[],
       // Step 3
       bankName: '', accountHolder: '', accountNumber: '', branchCode: '', 
@@ -72,26 +80,68 @@ export const VendorOnboardingPage: React.FC = () => {
       }
       setIsSubmitting(true);
       console.log('Submitting vendor application', formData);
-      // TODO: Backend call to submit application
-      await completeSellerOnboarding();
-      setIsSubmitting(false);
-      handleNext(); // Move to success step
+      
+      try {
+        // 1. Update user with KYC info from the form
+        await updateUser({
+            name: formData.ownerName,
+            phone: { number: formData.phone, verified: false },
+            // For simplicity, we store the full address in the 'street' field of the address object
+            address: { street: formData.address, city: '', country: '' }, 
+            identity: {
+                nationality: formData.nationality,
+                dateOfBirth: formData.dateOfBirth,
+                idType: formData.idType,
+                idNumber: formData.ownerId,
+            }
+        });
+
+        // 2. Mark onboarding as complete (updates user role and assigns a vendorId)
+        await completeSellerOnboarding();
+
+        setIsSubmitting(false);
+        handleNext(); // Move to success step
+      } catch (error) {
+          console.error("Onboarding submission failed:", error);
+          alert("There was an error submitting your application. Please try again.");
+          setIsSubmitting(false);
+      }
   };
   
   const renderStep = () => {
       switch(step) {
           case 1: return (
               <div>
-                  <h2 className="text-xl font-bold mb-1">Business Information</h2>
-                  <p className="text-sm text-neutral-500 mb-6">Tell us about your business and contact details.</p>
+                  <h2 className="text-xl font-bold mb-6">Owner & Business Information</h2>
+                  
+                  <h3 className="font-semibold text-neutral-800 mb-3 text-base">Contact Information</h3>
+                  <div className="space-y-4 mb-6">
+                     <IconInput icon={Mail} name="email" type="email" placeholder="Email Address *" required onChange={handleChange} value={formData.email}/>
+                     <IconInput icon={Phone} name="phone" type="tel" placeholder="Phone Number *" required onChange={handleChange} value={formData.phone}/>
+                  </div>
+
+                  <h3 className="font-semibold text-neutral-800 mb-3 text-base">Personal Details</h3>
+                   <div className="space-y-4 mb-6">
+                      <IconInput icon={UserIcon} name="ownerName" placeholder="Legal Name *" required onChange={handleChange} value={formData.ownerName}/>
+                      <IconInput icon={MapPin} name="address" placeholder="Address *" required isTextarea onChange={handleChange} value={formData.address}/>
+                      <IconInput icon={Globe} name="nationality" placeholder="Nationality *" required onChange={handleChange} value={formData.nationality}/>
+                      <IconInput icon={Calendar} name="dateOfBirth" placeholder="Date of birth (YYYY-MM-DD) *" required onChange={handleChange} value={formData.dateOfBirth} />
+                      <div>
+                          <label className="block text-sm font-medium text-neutral-700 mb-2">Type of ID *</label>
+                           <PillSelector 
+                              options={['Omang', 'Passport', "Driver's License"]}
+                              selected={formData.idType}
+                              onToggle={(type) => setFormData(p => ({...p, idType: p.idType === type ? '' : type}))}
+                          />
+                      </div>
+                      <IconInput icon={FileText} name="ownerId" placeholder="ID number *" required onChange={handleChange} value={formData.ownerId}/>
+                   </div>
+                  
+                  <h3 className="font-semibold text-neutral-800 mb-3 text-base">Business Details</h3>
                   <div className="space-y-4">
                       <IconInput icon={Store} name="businessName" placeholder="Business/Stall Name *" required onChange={handleChange} value={formData.businessName}/>
                       <IconInput icon={Shield} name="licenseNumber" placeholder="Business License Number" onChange={handleChange} value={formData.licenseNumber}/>
                       <IconInput icon={FileText} name="taxId" placeholder="Tax ID Number (if applicable)" onChange={handleChange} value={formData.taxId}/>
-                      <IconInput icon={UserIcon} name="ownerName" placeholder="Owner Full Name *" required onChange={handleChange} value={formData.ownerName}/>
-                      <IconInput icon={FileText} name="ownerId" placeholder="Owner ID Number *" required onChange={handleChange} value={formData.ownerId}/>
-                      <IconInput icon={Mail} name="email" type="email" placeholder="Email Address *" required onChange={handleChange} value={formData.email}/>
-                      <IconInput icon={Phone} name="phone" type="tel" placeholder="Phone Number *" required onChange={handleChange} value={formData.phone}/>
                   </div>
               </div>
           );
@@ -102,7 +152,7 @@ export const VendorOnboardingPage: React.FC = () => {
                   <div className="space-y-4">
                       <IconInput icon={Building} name="marketName" placeholder="Market Name (e.g. BBS Mall, Main Mall)" onChange={handleChange} value={formData.marketName}/>
                       <IconInput icon={Hash} name="stallNumber" placeholder="Stall Number/Location *" required onChange={handleChange} value={formData.stallNumber}/>
-                      <IconInput icon={MapPin} name="address" placeholder="Full Address/Location Details *" required isTextarea onChange={handleChange} value={formData.address}/>
+                      <IconInput icon={MapPin} name="locationAddress" placeholder="Full Address/Location Details *" required isTextarea onChange={handleChange} value={formData.locationAddress}/>
                       <IconInput icon={BookText} name="description" placeholder="Describe your business and products *" required isTextarea onChange={handleChange} value={formData.description}/>
                       <div>
                           <label className="block text-sm font-medium text-neutral-700 mb-2">Product Categories *</label>
@@ -132,7 +182,7 @@ export const VendorOnboardingPage: React.FC = () => {
                   <div className="space-y-4">
                       <PillSelector 
                           options={['Orange Money', 'Mascom MyZaka', 'BTC Smega']}
-                          selected={[formData.mobileMoneyProvider]}
+                          selected={formData.mobileMoneyProvider}
                           onToggle={(p) => setFormData(prev => ({...prev, mobileMoneyProvider: prev.mobileMoneyProvider === p ? '' : p}))}
                       />
                       {formData.mobileMoneyProvider && (

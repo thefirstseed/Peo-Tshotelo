@@ -5,9 +5,9 @@ interface CartContextType {
   cartItems: CartItem[];
   totalItems: number;
   totalPrice: number;
-  addToCart: (product: Product) => void;
-  removeFromCart: (productId: string) => void;
-  updateCartQuantity: (productId: string, newQuantity: number) => void;
+  addToCart: (product: Product, size?: string) => void;
+  removeFromCart: (cartItemId: string) => void;
+  updateCartQuantity: (cartItemId: string, newQuantity: number) => void;
   clearCart: () => void;
 }
 
@@ -36,31 +36,42 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('kk-cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, size?: string) => {
     setCartItems(prev => {
-      const existing = prev.find(item => item.product.id === product.id);
-      if (existing) {
+      const cartItemId = size ? `${product.id}-${size}` : product.id;
+      const existingItem = prev.find(item => item.id === cartItemId);
+
+      if (existingItem) {
+        // Item with same product and size exists, just increase quantity
         return prev.map(item =>
-          item.product.id === product.id
+          item.id === cartItemId
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
+      } else {
+        // Add new item to cart
+        const newItem: CartItem = {
+          id: cartItemId,
+          product,
+          quantity: 1,
+          size,
+        };
+        return [...prev, newItem];
       }
-      return [...prev, { product, quantity: 1 }];
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCartItems(prev => prev.filter(item => item.product.id !== productId));
+  const removeFromCart = (cartItemId: string) => {
+    setCartItems(prev => prev.filter(item => item.id !== cartItemId));
   };
 
-  const updateCartQuantity = (productId: string, newQuantity: number) => {
+  const updateCartQuantity = (cartItemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(cartItemId);
     } else {
       setCartItems(prev =>
         prev.map(item =>
-          item.product.id === productId ? { ...item, quantity: newQuantity } : item
+          item.id === cartItemId ? { ...item, quantity: newQuantity } : item
         )
       );
     }

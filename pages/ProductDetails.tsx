@@ -23,6 +23,9 @@ export const ProductDetailsPage: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAdded, setIsAdded] = useState(false);
   const addedTimeoutRef = useRef<number | null>(null);
+  
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // State for new review form
   const [newReviewRating, setNewReviewRating] = useState(0);
@@ -80,7 +83,14 @@ export const ProductDetailsPage: React.FC = () => {
 
   const handleAddToCart = () => {
     if (!product || product.stock === 0) return;
-    addToCart(product);
+    
+    const requiresSize = product.sizes && product.sizes.length > 0;
+    if (requiresSize && !selectedSize) {
+        setValidationError('Please select a size to continue.');
+        return;
+    }
+
+    addToCart(product, selectedSize || undefined);
     setIsAdded(true);
 
     if (addedTimeoutRef.current) {
@@ -107,6 +117,10 @@ export const ProductDetailsPage: React.FC = () => {
   const wishlisted = product ? isWishlisted(product.id) : false;
   const handleWishlistToggle = () => {
     if (!product) return;
+    if (!user) {
+        navigate('/login');
+        return;
+    }
     if (wishlisted) {
       removeFromWishlist(product.id);
     } else {
@@ -150,6 +164,7 @@ export const ProductDetailsPage: React.FC = () => {
   if (!product) return <ErrorDisplay message="Product could not be found." />;
   
   const averageRating = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) : 0;
+  const canAddToCart = !(product.sizes && product.sizes.length > 0 && !selectedSize);
 
   return (
     <>
@@ -223,11 +238,41 @@ export const ProductDetailsPage: React.FC = () => {
           </div>
           <span className="text-3xl font-bold text-neutral-900 mb-6 block">P {product.price.toFixed(2)}</span>
 
+          {product.sizes && product.sizes.length > 0 && (
+            <div className="mb-6">
+                <p className="text-sm font-medium text-neutral-900 mb-2">Select Size:</p>
+                <div className="flex flex-wrap gap-2">
+                    {product.sizes.map(size => (
+                        <button
+                            key={size}
+                            onClick={() => {
+                                setSelectedSize(size);
+                                setValidationError(null); // Clear error on selection
+                            }}
+                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors border ${
+                                selectedSize === size
+                                    ? 'bg-neutral-900 border-neutral-900 text-white'
+                                    : 'bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-100'
+                            }`}
+                        >
+                            {size}
+                        </button>
+                    ))}
+                </div>
+            </div>
+          )}
+          
+          {validationError && (
+              <div className="flex items-start gap-2 text-xs text-red-600 mb-4 p-2 bg-red-50 rounded-md border border-red-200">
+                  <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>{validationError}</span>
+              </div>
+          )}
 
           <div className="grid grid-cols-5 gap-3 mb-8">
             <button 
               onClick={handleAddToCart}
-              disabled={product.stock === 0 || isAdded}
+              disabled={!canAddToCart || product.stock === 0 || isAdded}
               className={`col-span-4 text-white py-3.5 px-6 rounded-full font-semibold transition flex items-center justify-center gap-2 active:scale-95 duration-300
                 ${isAdded ? 'bg-green-600' : 'bg-primary-500 hover:bg-primary-600 shadow-lg shadow-primary-200'}
                 disabled:bg-neutral-300 disabled:shadow-none disabled:cursor-not-allowed`}
@@ -256,18 +301,6 @@ export const ProductDetailsPage: React.FC = () => {
             <p className="text-neutral-600 leading-relaxed text-sm md:text-base">
               {product.description}
             </p>
-            {product.sizes && (
-              <div className="mt-4">
-                <p className="text-sm font-medium text-neutral-900 mb-2">Available Sizes:</p>
-                <div className="flex gap-2">
-                  {product.sizes.map(size => (
-                    <span key={size} className="px-3 py-1 border border-neutral-300 rounded-md text-sm text-neutral-600">
-                      {size}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {vendor && (

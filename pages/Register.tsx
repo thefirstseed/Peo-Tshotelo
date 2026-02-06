@@ -18,6 +18,13 @@ export const RegisterPage: React.FC = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate that the name has at least two parts (first and last name)
+    if (name.trim().split(' ').length < 2) {
+        setError("Please enter your full name, including your first and last name.");
+        return;
+    }
+
     if (password.length < 6) {
         setError("Password must be at least 6 characters long.");
         return;

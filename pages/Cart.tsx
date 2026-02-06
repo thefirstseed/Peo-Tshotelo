@@ -85,7 +85,8 @@ export const CartPage: React.FC = () => {
     setPaymentError(null);
     setIsProcessing(true);
     try {
-        await processPayment(total, { ...paymentDetails, address: deliveryAddress });
+        if (!user) throw new Error("User not logged in");
+        await processPayment(total, { ...paymentDetails, address: deliveryAddress }, cartItems, user.id);
         clearCart();
         setCheckoutStep('success');
     } catch (err) {
@@ -151,7 +152,7 @@ export const CartPage: React.FC = () => {
       <div className="grid lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-4">
           {cartItems.map(item => (
-            <div key={item.product.id} className="flex gap-4 bg-white p-4 rounded-xl border border-neutral-200/80 shadow-sm">
+            <div key={item.id} className="flex gap-4 bg-white p-4 rounded-xl border border-neutral-200/80 shadow-sm">
               <img 
                 src={item.product.imageUrls[0]} 
                 alt={item.product.title} 
@@ -160,23 +161,25 @@ export const CartPage: React.FC = () => {
               <div className="flex-1 flex flex-col">
                 <div className="flex justify-between items-start">
                   <h3 className="font-semibold text-neutral-900 line-clamp-2 pr-2">{item.product.title}</h3>
-                  <button onClick={() => removeFromCart(item.product.id)} className="text-neutral-400 hover:text-red-500 p-1 flex-shrink-0">
+                  <button onClick={() => removeFromCart(item.id)} className="text-neutral-400 hover:text-red-500 p-1 flex-shrink-0">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
                 <p className="text-sm text-neutral-500">{item.product.vendorName}</p>
-                
+                {item.size && (
+                    <p className="text-xs text-neutral-600 mt-1 bg-neutral-100 px-2 py-0.5 rounded w-max font-medium">Size: {item.size}</p>
+                )}
                 <div className="mt-auto flex items-end justify-between">
                     <div className="flex items-center gap-3 bg-neutral-100 w-max rounded-lg p-1 mt-2">
                       <button 
-                        onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
+                        onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
                         className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:bg-white rounded font-bold"
                       >
                         -
                       </button>
                       <span className="text-sm font-medium w-4 text-center">{item.quantity}</span>
                       <button 
-                        onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
+                        onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
                         className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:bg-white rounded font-bold"
                       >
                         +

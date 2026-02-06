@@ -22,6 +22,7 @@ import { EditProfilePage } from './pages/EditProfilePage';
 import { AddressesPage } from './pages/AddressesPage';
 import { SignInAndSecurityPage } from './pages/SignInAndSecurityPage';
 import { BuyerPaymentsPage } from './pages/BuyerPaymentsPage';
+import { PurchaseHistoryPage } from './pages/PurchaseHistoryPage';
 
 export default function App() {
   return (
@@ -86,6 +87,11 @@ export default function App() {
            <Route path="/settings/payments" component={() => (
             <ProtectedRoute roles={['buyer']}>
               <BuyerPaymentsPage />
+            </ProtectedRoute>
+          )} />
+           <Route path="/settings/history" component={() => (
+            <ProtectedRoute roles={['buyer']}>
+              <PurchaseHistoryPage />
             </ProtectedRoute>
           )} />
           <Route path="/wishlist" component={() => (
