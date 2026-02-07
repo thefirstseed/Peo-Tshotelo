@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
-import { WishlistProvider } from './contexts/WishlistContext';
+import { LikesProvider } from './contexts/LikesContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -15,9 +15,9 @@ root.render(
   <React.StrictMode>
     <AuthProvider>
       <CartProvider>
-        <WishlistProvider>
+        <LikesProvider>
           <App />
-        </WishlistProvider>
+        </LikesProvider>
       </CartProvider>
     </AuthProvider>
   </React.StrictMode>

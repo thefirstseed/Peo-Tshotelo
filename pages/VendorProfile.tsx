@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Vendor, Product } from '../types';
-import { ArrowLeft, Star, MapPin, BadgeCheck, CalendarDays, Check } from 'lucide-react';
+import { Vendor, Product, User } from '../types';
+import { ArrowLeft, Star, MapPin, BadgeCheck, CalendarDays, Check, MessageSquare } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { useParams, navigate } from '../router';
-import { fetchVendor, fetchProductsByVendor } from '../api/api';
+import { fetchVendor, fetchProductsByVendor, startConversation } from '../api/api';
+import { useAuth } from '../hooks/useAuth';
 
 export const VendorProfilePage: React.FC = () => {
   const { id: vendorId } = useParams();
+  const { user, toggleFollow } = useAuth();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isFollowLoading, setIsFollowLoading] = useState(false);
+
+  const isFollowing = user?.following.includes(vendorId || '') || false;
 
   useEffect(() => {
     if (!vendorId) {
@@ -42,14 +44,32 @@ export const VendorProfilePage: React.FC = () => {
     loadData();
   }, [vendorId]);
 
-  const handleFollowToggle = async () => {
-    setIsFollowLoading(true);
-    // TODO Backend: Replace with a real API call like:
-    // await api.toggleFollowVendor(vendorId);
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-    setIsFollowing(prev => !prev);
-    setIsFollowLoading(false);
+  const handleFollowToggle = () => {
+    if (!user) {
+        navigate('/login');
+        return;
+    }
+    if (vendorId) {
+        toggleFollow(vendorId);
+    }
   }
+
+  const handleMessageSeller = async () => {
+    // This assumes we can message a seller about any of their products,
+    // or just a general message. For now, we'll pick the first product.
+    if (!user || !vendorId || products.length === 0) {
+        navigate('/login');
+        return;
+    }
+    try {
+        const conversationId = await startConversation(products[0].id, user.id);
+        navigate(`/conversations/${conversationId}`);
+    } catch (error) {
+        console.error("Failed to start conversation:", error);
+        alert("Could not start a conversation. Please try again later.");
+    }
+  };
+
 
   const formattedJoinedDate = vendor 
     ? new Date(vendor.joinedDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -84,7 +104,6 @@ export const VendorProfilePage: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 md:-mt-20 relative z-10">
         
-        {/* Vendor Header Card */}
         <div className="bg-white rounded-2xl shadow-lg border border-neutral-200/50 p-6 flex flex-col md:flex-row items-start md:items-center gap-6">
           <div className="relative flex-shrink-0">
             <img 
@@ -94,8 +113,7 @@ export const VendorProfilePage: React.FC = () => {
             />
             {vendor.verified && (
               <div className="absolute bottom-1 right-1 bg-primary-500 text-white p-1.5 rounded-full border-2 border-white" title="Verified Seller">
-                <BadgeCheck className="w-4 h-4" />
-                <span className="sr-only">Verified Seller</span>
+                <BadgeCheck className="w-4 h-4" /><span className="sr-only">Verified Seller</span>
               </div>
             )}
           </div>
@@ -105,57 +123,34 @@ export const VendorProfilePage: React.FC = () => {
             <p className="text-neutral-600 mt-2 max-w-2xl">{vendor.description}</p>
             
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-neutral-600 mt-4 border-t border-neutral-100 pt-4">
-              <div className="flex items-center">
-                 <MapPin className="w-4 h-4 mr-1.5 text-neutral-400" />
-                 {vendor.location}
-              </div>
-              <div className="flex items-center">
-                 <Star className="w-4 h-4 mr-1.5 text-yellow-400 fill-yellow-400" />
-                 <span className="font-medium text-neutral-800 mr-1">{vendor.rating}</span>
-                 <span>({vendor.reviewCount} reviews)</span>
-              </div>
-              <div className="flex items-center">
-                 <CalendarDays className="w-4 h-4 mr-1.5 text-neutral-400" />
-                 Joined {formattedJoinedDate}
-              </div>
+              <div className="flex items-center"><MapPin className="w-4 h-4 mr-1.5 text-neutral-400" />{vendor.location}</div>
+              <div className="flex items-center"><Star className="w-4 h-4 mr-1.5 text-yellow-400 fill-yellow-400" /><span className="font-medium text-neutral-800 mr-1">{vendor.rating}</span><span>({vendor.reviewCount} reviews)</span></div>
+              <div className="flex items-center"><CalendarDays className="w-4 h-4 mr-1.5 text-neutral-400" />Joined {formattedJoinedDate}</div>
+              <div className="flex items-center"><span className="font-medium text-neutral-800 mr-1">{vendor.followerCount}</span> Followers</div>
             </div>
           </div>
 
-          <div className="w-full md:w-auto flex flex-col md:items-end gap-2 self-start md:self-center">
+          <div className="w-full md:w-auto flex flex-col md:flex-row gap-2 self-start md:self-center">
+             <button onClick={handleMessageSeller} className="px-6 py-2 rounded-full font-semibold transition text-sm flex items-center justify-center gap-1.5 bg-white border border-neutral-300 hover:bg-neutral-100">
+                <MessageSquare className="w-4 h-4" />
+                Message
+            </button>
             <button 
               onClick={handleFollowToggle}
-              disabled={isFollowLoading}
               className={`w-full md:w-auto px-6 py-2 rounded-full font-semibold transition text-sm flex items-center justify-center gap-1.5 disabled:opacity-70
-                ${isFollowing && !isFollowLoading
-                  ? 'bg-neutral-200 text-neutral-800' 
-                  : 'bg-neutral-900 text-white hover:bg-neutral-800'}`
+                ${isFollowing ? 'bg-neutral-200 text-neutral-800' : 'bg-neutral-900 text-white hover:bg-neutral-800'}`
                 }
             >
-              {isFollowLoading ? (
-                '...'
-              ) : isFollowing ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  <span>Following</span>
-                </>
-              ) : (
-                'Follow'
-              )}
+              {isFollowing ? (<><Check className="w-4 h-4" /><span>Following</span></>) : ('Follow')}
             </button>
           </div>
         </div>
 
-        {/* Products Grid */}
         <div className="mt-12">
           <h2 className="text-2xl font-bold text-neutral-900 mb-6 tracking-tight">Shop Items ({products.length})</h2>
           {products.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {products.map(product => (
-                <ProductCard 
-                  key={product.id} 
-                  product={product} 
-                />
-              ))}
+              {products.map(product => <ProductCard key={product.id} product={product} />)}
             </div>
           ) : (
             <div className="text-center py-16 bg-white rounded-xl border border-neutral-200/80">

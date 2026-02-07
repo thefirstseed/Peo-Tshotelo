@@ -14,7 +14,7 @@ import { RegisterPage } from './pages/Register';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { OurStoryPage } from './pages/OurStory';
 import { ProfileSettingsPage } from './pages/ProfileSettings';
-import { WishlistPage } from './pages/WishlistPage';
+import { LikesPage } from './pages/LikesPage';
 import { StorefrontSettingsPage } from './pages/StorefrontSettings';
 import { PayoutSettingsPage } from './pages/PayoutSettings';
 import { SellPage } from './pages/Sell';
@@ -23,6 +23,8 @@ import { AddressesPage } from './pages/AddressesPage';
 import { SignInAndSecurityPage } from './pages/SignInAndSecurityPage';
 import { BuyerPaymentsPage } from './pages/BuyerPaymentsPage';
 import { PurchaseHistoryPage } from './pages/PurchaseHistoryPage';
+import { InboxPage } from './pages/InboxPage';
+import { ConversationPage } from './pages/ConversationPage';
 
 export default function App() {
   return (
@@ -69,6 +71,16 @@ export default function App() {
               <ProfileSettingsPage />
             </ProtectedRoute>
           )} />
+          <Route path="/inbox" component={() => (
+            <ProtectedRoute roles={['seller', 'buyer']}>
+              <InboxPage />
+            </ProtectedRoute>
+          )} />
+          <Route path="/conversations/:id" component={() => (
+            <ProtectedRoute roles={['seller', 'buyer']}>
+              <ConversationPage />
+            </ProtectedRoute>
+          )} />
            <Route path="/settings/personal-info" component={() => (
             <ProtectedRoute roles={['seller', 'buyer']}>
               <EditProfilePage />
@@ -94,9 +106,9 @@ export default function App() {
               <PurchaseHistoryPage />
             </ProtectedRoute>
           )} />
-          <Route path="/wishlist" component={() => (
+          <Route path="/likes" component={() => (
             <ProtectedRoute roles={['seller', 'buyer']}>
-              <WishlistPage />
+              <LikesPage />
             </ProtectedRoute>
           )} />
            <Route path="/settings/storefront" component={() => (

@@ -39,7 +39,7 @@ export const VendorOnboardingPage: React.FC = () => {
   const { completeSellerOnboarding, user, updateUser } = useAuth();
   const [formData, setFormData] = useState({
       // Step 1 - Business
-      businessName: '', licenseNumber: '', taxId: '',
+      businessName: '',
       // Step 1 - Personal
       ownerName: user?.name || '',
       phone: user?.phone?.number || '',
@@ -56,7 +56,7 @@ export const VendorOnboardingPage: React.FC = () => {
       bankName: '', accountHolder: '', accountNumber: '', branchCode: '', 
       mobileMoneyProvider: '', mobileMoneyName: '', mobileMoneyNumber: '',
       // Step 4
-      licenseFile: null as File | null, idFile: null as File | null, shopPhotoFile: null as File | null,
+      idFile: null as File | null, shopPhotoFile: null as File | null,
       productPhotosFile: null as File | null, bankStatementFile: null as File | null, termsAccepted: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -140,8 +140,6 @@ export const VendorOnboardingPage: React.FC = () => {
                   <h3 className="font-semibold text-neutral-800 mb-3 text-base">Business Details</h3>
                   <div className="space-y-4">
                       <IconInput icon={Store} name="businessName" placeholder="Business/Stall Name *" required onChange={handleChange} value={formData.businessName}/>
-                      <IconInput icon={Shield} name="licenseNumber" placeholder="Business License Number" onChange={handleChange} value={formData.licenseNumber}/>
-                      <IconInput icon={FileText} name="taxId" placeholder="Tax ID Number (if applicable)" onChange={handleChange} value={formData.taxId}/>
                   </div>
               </div>
           );
@@ -214,7 +212,6 @@ export const VendorOnboardingPage: React.FC = () => {
                   <h2 className="text-xl font-bold mb-1">Document Upload</h2>
                   <p className="text-sm text-neutral-500 mb-6">Upload required documents to complete your application.</p>
                   <div className="space-y-4">
-                    <FileUpload label="Business License/Trading Permit" required onFileChange={handleFileChange('licenseFile')} />
                     <FileUpload label="Owner ID Copy" required onFileChange={handleFileChange('idFile')} />
                     <FileUpload label="Stall/Shop Photo" required onFileChange={handleFileChange('shopPhotoFile')} />
                     <FileUpload label="Bank Statement (Last 3 months)" onFileChange={handleFileChange('bankStatementFile')} />

@@ -110,10 +110,10 @@ export const ProfileSettingsPage: React.FC = () => {
                             />
                          )}
                          <SettingsLink 
-                            title="Wishlist" 
+                            title="My Likes" 
                             description="View your saved items."
                             icon={Heart}
-                            onClick={() => navigate('/wishlist')}
+                            onClick={() => navigate('/likes')}
                         />
                     </div>
                 </div>

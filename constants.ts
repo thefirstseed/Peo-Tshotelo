@@ -1,4 +1,4 @@
-import { Product, Vendor, Review } from './types';
+import { Product, Vendor, Review, Conversation, Message } from './types';
 
 export const MOCK_VENDORS: Vendor[] = [
   {
@@ -11,7 +11,8 @@ export const MOCK_VENDORS: Vendor[] = [
     bannerUrl: 'https://picsum.photos/seed/vendor1-banner/1200/400',
     description: 'Authentic vintage clothing sourced locally. We specialize in 90s streetwear and unique finds.',
     joinedDate: '2023-01-15',
-    verified: true
+    verified: true,
+    followerCount: 1250,
   },
   {
     id: 'v2',
@@ -23,7 +24,8 @@ export const MOCK_VENDORS: Vendor[] = [
     bannerUrl: 'https://picsum.photos/seed/vendor2-banner/1200/400',
     description: 'Curated secondhand and reworked clothing. If it doesn\'t fit, we can alter it.',
     joinedDate: '2023-03-10',
-    verified: true
+    verified: true,
+    followerCount: 890,
   },
   {
     id: 'v3',
@@ -35,7 +37,8 @@ export const MOCK_VENDORS: Vendor[] = [
     bannerUrl: 'https://picsum.photos/seed/vendor3-banner/1200/400',
     description: 'Handcrafted accessories and bohemian-style clothing from the heart of the Delta.',
     joinedDate: '2023-06-22',
-    verified: false
+    verified: false,
+    followerCount: 430,
   }
 ];
 
@@ -56,6 +59,7 @@ export const MOCK_PRODUCTS: Product[] = [
     sizes: ['L', 'XL'],
     condition: 'Good',
     stock: 5,
+    likeCount: 112,
   },
   {
     id: 'p2',
@@ -69,6 +73,7 @@ export const MOCK_PRODUCTS: Product[] = [
     sizes: ['M', 'L'],
     condition: 'Like New',
     stock: 3,
+    likeCount: 230,
   },
   {
     id: 'p3',
@@ -82,6 +87,7 @@ export const MOCK_PRODUCTS: Product[] = [
     sizes: ['42', '43', '44'],
     condition: 'New',
     stock: 0,
+    likeCount: 78,
   },
   {
     id: 'p4',
@@ -97,6 +103,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: 'Accessories',
     condition: 'New',
     stock: 10,
+    likeCount: 156,
   },
   {
     id: 'p5',
@@ -110,6 +117,7 @@ export const MOCK_PRODUCTS: Product[] = [
     sizes: ['S', 'M', 'L'],
     condition: 'New',
     stock: 0,
+    likeCount: 45,
   },
   {
     id: 'p6',
@@ -122,6 +130,7 @@ export const MOCK_PRODUCTS: Product[] = [
     category: 'Services',
     condition: 'New',
     stock: 99,
+    likeCount: 12,
   }
 ];
 
@@ -154,6 +163,57 @@ export const MOCK_REVIEWS: Review[] = [
         date: '2024-05-15T09:00:00Z',
     }
 ];
+
+
+// --- MOCK DATA for MESSAGING ---
+export const MOCK_CONVERSATIONS: Conversation[] = [
+    {
+        id: 'conv1',
+        participantIds: ['u1', 'user1'], // Seller is identified by their userId 'user1' now
+        participants: {
+            'u1': { name: 'Thabo Moeng', avatar: 'https://i.pravatar.cc/150?u=u1' },
+            'user1': { name: 'Thrifty Gabs', avatar: 'https://picsum.photos/seed/vendor1/100/100' }
+        },
+        productId: 'p1',
+        productTitle: 'Vintage Denim Jacket - Blue',
+        productImage: 'https://picsum.photos/seed/p1/200/200',
+        lastMessage: {
+            text: "Okay, sounds good. I'll take it for P220.",
+            timestamp: new Date(Date.now() - 5 * 60000).toISOString(),
+            senderId: 'u1'
+        },
+        unread: false,
+    },
+    {
+        id: 'conv2',
+        participantIds: ['u1', 'u2'], // Seller is identified by their userId 'u2'
+         participants: {
+            'u1': { name: 'Thabo Moeng', avatar: 'https://i.pravatar.cc/150?u=u1' },
+            'u2': { name: "Kagiso's Kloset", avatar: 'https://picsum.photos/seed/vendor2/100/100' }
+        },
+        productId: 'p2',
+        productTitle: 'Reworked Floral Dress',
+        productImage: 'https://picsum.photos/seed/p2/200/200',
+        lastMessage: {
+            text: "Hi! Is this still available in a size M?",
+            timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
+            senderId: 'u1'
+        },
+        unread: true,
+    }
+];
+
+export const MOCK_MESSAGES: { [conversationId: string]: Message[] } = {
+    'conv1': [
+        { id: 'm1', conversationId: 'conv1', senderId: 'u1', text: "Hey, would you consider P200 for this jacket?", timestamp: new Date(Date.now() - 20 * 60000).toISOString() },
+        { id: 'm2', conversationId: 'conv1', senderId: 'user1', text: "Hi there! Thanks for the offer. The lowest I can go is P220.", timestamp: new Date(Date.now() - 15 * 60000).toISOString() },
+        { id: 'm3', conversationId: 'conv1', senderId: 'u1', text: "Okay, sounds good. I'll take it for P220.", timestamp: new Date(Date.now() - 5 * 60000).toISOString() },
+        { id: 'm4', conversationId: 'conv1', senderId: 'user1', text: "Great! I've accepted your offer. You can now proceed to checkout from this chat.", timestamp: new Date(Date.now() - 4 * 60000).toISOString(), offer: { amount: 220, status: 'accepted' } }
+    ],
+    'conv2': [
+         { id: 'm5', conversationId: 'conv2', senderId: 'u1', text: "Hi! Is this still available in a size M?", timestamp: new Date(Date.now() - 2 * 3600000).toISOString() }
+    ]
+};
 
 
 export const CATEGORIES = ['All', 'Clothing', 'Accessories', 'Home', 'Services'];

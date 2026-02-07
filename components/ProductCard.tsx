@@ -2,7 +2,7 @@ import React from 'react';
 import { Product } from '../types';
 import { MapPin, Heart } from 'lucide-react';
 import { navigate } from '../router';
-import { useWishlist } from '../hooks/useWishlist';
+import { useLikes } from '../hooks/useLikes';
 import { useAuth } from '../hooks/useAuth';
 
 interface ProductCardProps {
@@ -10,24 +10,24 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
+  const { isLiked, addToLikes, removeFromLikes } = useLikes();
   const { user } = useAuth();
-  const wishlisted = isWishlisted(product.id);
+  const liked = isLiked(product.id);
 
   const handleClick = () => {
     navigate(`/products/${product.id}`);
   };
 
-  const handleWishlistToggle = (e: React.MouseEvent) => {
+  const handleLikeToggle = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigation when clicking the heart
     if (!user) {
         navigate('/login');
         return;
     }
-    if (wishlisted) {
-      removeFromWishlist(product.id);
+    if (liked) {
+      removeFromLikes(product.id);
     } else {
-      addToWishlist(product);
+      addToLikes(product);
     }
   };
 
@@ -52,12 +52,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
 
         <button 
-          onClick={handleWishlistToggle}
+          onClick={handleLikeToggle}
           className="absolute top-2.5 right-2.5 bg-white/70 backdrop-blur-sm p-2 rounded-full z-10 hover:bg-white transition-transform duration-200 active:scale-125"
-          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          aria-label={liked ? "Remove from likes" : "Add to likes"}
         >
           <Heart 
-            className={`w-5 h-5 transition-all ${wishlisted ? 'text-red-500 fill-red-500' : 'text-neutral-600'}`} 
+            className={`w-5 h-5 transition-all ${liked ? 'text-red-500 fill-red-500' : 'text-neutral-600'}`} 
           />
         </button>
 
@@ -71,6 +71,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="p-4 flex flex-col flex-grow">
         <div className="flex justify-between items-start mb-1">
           <h3 className="font-semibold text-neutral-800 leading-snug pr-2">{product.title}</h3>
+          <div className="flex items-center text-xs text-neutral-500">
+             <Heart className="w-3.5 h-3.5 mr-1" />
+             <span>{product.likeCount}</span>
+          </div>
         </div>
         
         <p className="text-sm text-neutral-600 mb-2 truncate">{product.vendorName}</p>

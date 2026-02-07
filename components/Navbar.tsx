@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShoppingBag, Heart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, Settings } from 'lucide-react';
+import { ShoppingBag, Heart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, Settings, MessageSquare } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { navigate } from '../router';
-import { useWishlist } from '../hooks/useWishlist';
+import { useLikes } from '../hooks/useLikes';
 
 const UserMenu: React.FC = () => {
     const { user, logout } = useAuth();
@@ -53,7 +53,7 @@ const UserMenu: React.FC = () => {
 
 export const Navbar: React.FC = () => {
   const { totalItems } = useCart();
-  const { wishlistCount } = useWishlist();
+  const { likesCount } = useLikes();
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,20 +97,17 @@ export const Navbar: React.FC = () => {
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-neutral-200 z-50 h-16">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           
-          {/* Logo and Brand Name */}
           <div className="flex items-center gap-2 cursor-pointer flex-shrink-0" onClick={() => handleNavLinkClick('/')}>
             <div className="w-8 h-8 bg-[#E85D3B] rounded-md flex items-center justify-center text-white font-bold text-lg font-heading">K</div>
             <span className="text-xl font-bold tracking-tight text-neutral-900">Kulture Kloze</span>
           </div>
 
-          {/* Centered Navigation Links (Desktop) */}
           <div className="hidden md:flex items-center justify-center flex-1 gap-6 text-sm font-medium">
             <NavLink onClick={() => handleNavLinkClick('/')}>Browse</NavLink>
             <NavLink onClick={handleSellOrDashboardClick}>{user?.role === 'seller' ? 'Dashboard' : 'Sell'}</NavLink>
           </div>
 
-          {/* Right Side Actions (Desktop) */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-1">
             {user ? (
               <UserMenu />
             ) : (
@@ -124,19 +121,25 @@ export const Navbar: React.FC = () => {
 
             <div className="w-px h-6 bg-neutral-200 ml-2" />
             
-            <button 
-              onClick={() => handleNavLinkClick('/wishlist')}
+             <button 
+              onClick={() => handleNavLinkClick('/inbox')}
               className="relative p-2 hover:bg-neutral-100 rounded-full transition"
-              aria-label="Wishlist"
+              aria-label="Inbox"
+            >
+              <MessageSquare className="w-6 h-6 text-neutral-800" />
+            </button>
+            <button 
+              onClick={() => handleNavLinkClick('/likes')}
+              className="relative p-2 hover:bg-neutral-100 rounded-full transition"
+              aria-label="Likes"
             >
               <Heart className="w-6 h-6 text-neutral-800" />
-              {wishlistCount > 0 && (
+              {likesCount > 0 && (
                 <span className="absolute top-1 right-1 bg-primary-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                  {wishlistCount}
+                  {likesCount}
                 </span>
               )}
             </button>
-
             <button 
               onClick={() => handleNavLinkClick('/cart')} 
               className="relative p-2 hover:bg-neutral-100 rounded-full transition"
@@ -151,17 +154,23 @@ export const Navbar: React.FC = () => {
             </button>
           </div>
 
-          {/* Mobile Menu Button & Cart*/}
           <div className="md:hidden flex items-center gap-1">
-             <button
-                onClick={() => handleNavLinkClick('/wishlist')}
+             <button 
+                onClick={() => handleNavLinkClick('/inbox')}
                 className="relative p-2 hover:bg-neutral-100 rounded-full transition"
-                aria-label="Wishlist"
+                aria-label="Inbox"
+              >
+              <MessageSquare className="w-6 h-6 text-neutral-800" />
+            </button>
+             <button
+                onClick={() => handleNavLinkClick('/likes')}
+                className="relative p-2 hover:bg-neutral-100 rounded-full transition"
+                aria-label="Likes"
              >
                 <Heart className="w-6 h-6 text-neutral-800" />
-                 {wishlistCount > 0 && (
+                 {likesCount > 0 && (
                   <span className="absolute top-1 right-1 bg-primary-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                    {wishlistCount}
+                    {likesCount}
                   </span>
                 )}
              </button>
@@ -184,7 +193,6 @@ export const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Menu Dropdown */}
       {isMenuOpen && (
         <div 
           className="md:hidden fixed top-16 left-0 w-full bg-white z-40 shadow-lg border-t border-neutral-200"

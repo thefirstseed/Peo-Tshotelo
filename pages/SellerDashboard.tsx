@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { DollarSign, Package, ShoppingCart, Edit, Trash2, Plus, AlertTriangle, Store, Clock, Banknote } from 'lucide-react';
-import { Product } from '../types';
+import { DollarSign, Package, ShoppingCart, Edit, Trash2, Plus, AlertTriangle, Store, Clock, Banknote, Heart, Users } from 'lucide-react';
+import { Product, Vendor } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ConfirmationDialog } from '../components/ConfirmationDialog';
 import { useAuth } from '../hooks/useAuth';
-import { fetchProductsByVendor, deleteProduct } from '../api/api';
+import { fetchProductsByVendor, deleteProduct, fetchVendor } from '../api/api';
 import { navigate } from '../router';
+import { ActivityFeed } from '../components/ActivityFeed';
 
 // TODO Backend: Replace MOCK_REVENUE with GET /api/sellers/:id/analytics
 const MOCK_REVENUE_DATA = [
@@ -43,6 +44,7 @@ const IncompleteProfileBanner: React.FC = () => (
 export const SellerDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
+  const [vendor, setVendor] = useState<Vendor | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,13 +56,16 @@ export const SellerDashboardPage: React.FC = () => {
     if (user?.vendorId) {
       setIsLoading(true);
       setError(null);
-      fetchProductsByVendor(user.vendorId)
-        .then(setProducts)
-        .catch(err => {
-            console.error("Failed to fetch listings:", err);
-            setError("Could not load your listings. Please refresh the page.");
-        })
-        .finally(() => setIsLoading(false));
+      Promise.all([
+        fetchProductsByVendor(user.vendorId),
+        fetchVendor(user.vendorId)
+      ]).then(([prods, vndr]) => {
+        setProducts(prods);
+        setVendor(vndr);
+      }).catch(err => {
+            console.error("Failed to fetch dashboard data:", err);
+            setError("Could not load your dashboard. Please refresh the page.");
+      }).finally(() => setIsLoading(false));
     } else {
         // If profile is not complete, we don't need to fetch products.
         setIsLoading(false);
@@ -90,7 +95,8 @@ export const SellerDashboardPage: React.FC = () => {
     }
   };
 
-  const totalRevenue = products.reduce((sum, product) => sum + product.price, 0);
+  const totalRevenue = MOCK_REVENUE_DATA.reduce((sum, item) => sum + item.revenue, 0);
+  const totalLikes = products.reduce((sum, product) => sum + product.likeCount, 0);
   const primaryPayoutMethod = user?.bankDetails?.bankName ? 'Bank Transfer' : user?.mobileMoneyDetails?.provider || 'Not Set';
 
 
@@ -123,9 +129,9 @@ export const SellerDashboardPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard icon={DollarSign} title="Total Revenue" value={`P ${totalRevenue.toFixed(2)}`} color="primary" />
-        <StatCard icon={Package} title="Total Products" value={products.length.toString()} color="blue" />
-        <StatCard icon={Banknote} title="Payouts" value={primaryPayoutMethod} color="green" onClick={() => navigate('/settings/payouts')} />
-        <StatCard icon={Clock} title="Pending Orders" value={"3"} color="yellow" />
+        <StatCard icon={Heart} title="Total Likes" value={totalLikes.toString()} color="orange" />
+        <StatCard icon={Users} title="Followers" value={vendor?.followerCount.toString() || '0'} color="blue" />
+        <StatCard icon={Package} title="Products" value={products.length.toString()} color="green" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -162,19 +168,22 @@ export const SellerDashboardPage: React.FC = () => {
                 </table>
             </div>
         </div>
-        <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-neutral-200/80">
-            <h2 className="text-xl font-bold mb-4">Revenue</h2>
-            <div style={{ width: '100%', height: 250 }}>
-               <ResponsiveContainer>
-                  <BarChart data={MOCK_REVENUE_DATA} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#ebe7e4" vertical={false} />
-                    <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} stroke="#716b65" />
-                    <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="#716b65" tickFormatter={(value) => `P${value/1000}k`} />
-                    <Tooltip cursor={{fill: 'rgba(232, 93, 59, 0.1)'}} contentStyle={{backgroundColor: '#fff', border: '1px solid #ebe7e4', borderRadius: '0.75rem'}}/>
-                    <Bar dataKey="revenue" fill="#e85d3b" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-               </ResponsiveContainer>
+        <div className="lg:col-span-1 space-y-8">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200/80">
+                <h2 className="text-xl font-bold mb-4">Revenue</h2>
+                <div style={{ width: '100%', height: 250 }}>
+                   <ResponsiveContainer>
+                      <BarChart data={MOCK_REVENUE_DATA} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ebe7e4" vertical={false} />
+                        <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} stroke="#716b65" />
+                        <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="#716b65" tickFormatter={(value) => `P${value/1000}k`} />
+                        <Tooltip cursor={{fill: 'rgba(232, 93, 59, 0.1)'}} contentStyle={{backgroundColor: '#fff', border: '1px solid #ebe7e4', borderRadius: '0.75rem'}}/>
+                        <Bar dataKey="revenue" fill="#e85d3b" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                   </ResponsiveContainer>
+                </div>
             </div>
+            <ActivityFeed />
         </div>
       </div>
 

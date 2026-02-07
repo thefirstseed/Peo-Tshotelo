@@ -16,22 +16,25 @@ const MOCK_USERS: UserWithPassword[] = [
     address: { street: '123 Main Road', city: 'Gaborone', country: 'Botswana' },
     emailVerified: false,
     phone: { number: '72 123 456', verified: true },
-    identity: { nationality: 'Motswana', dateOfBirth: '1990-05-15', idType: 'Omang', idNumber: '••••••••123' }
+    identity: { nationality: 'Motswana', dateOfBirth: '1990-05-15', idType: 'Omang', idNumber: '••••••••123' },
+    following: ['v2'],
   },
   { 
     id: 'u2', name: 'Kagiso Dlamini', email: 'kagiso@email.com', password: 'password123', role: 'seller', vendorId: 'v2',
     emailVerified: true,
     phone: { number: '71 987 654', verified: true },
     bankDetails: { bankName: 'FNB Botswana', accountHolder: 'Kagiso Dlamini', accountNumber: '62801234567', branchCode: '282067' },
-    mobileMoneyDetails: { provider: 'Orange Money', name: 'K Dlamini', number: '72000111' }
+    mobileMoneyDetails: { provider: 'Orange Money', name: 'K Dlamini', number: '72000111' },
+    following: [],
   },
   // Users for the demo login buttons
   { 
     id: 'user1', name: 'Thrifty Gabs', email: 'seller@kulture.com', password: 'password', role: 'seller', vendorId: 'v1',
     emailVerified: true,
-    bankDetails: { bankName: 'Stanbic Bank', accountHolder: 'Thrifty Gabs Store', accountNumber: '9060001234567', branchCode: '062167' }
+    bankDetails: { bankName: 'Stanbic Bank', accountHolder: 'Thrifty Gabs Store', accountNumber: '9060001234567', branchCode: '062167' },
+    following: [],
   },
-  { id: 'user2', name: 'Pula Buyer', email: 'buyer@kulture.com', password: 'password', role: 'buyer', emailVerified: true },
+  { id: 'u-buyer-demo', name: 'Pula Buyer', email: 'buyer@kulture.com', password: 'password', role: 'buyer', emailVerified: true, following: [] },
 ];
 
 interface AuthContextType {
@@ -42,6 +45,7 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (updatedDetails: Partial<User>) => Promise<void>;
   completeSellerOnboarding: () => Promise<void>;
+  toggleFollow: (vendorId: string) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -85,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       password,
       role,
       emailVerified: false,
+      following: [],
     };
     
     // Add the new user to our in-memory DB
@@ -131,10 +136,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(updatedUser);
     setIsLoading(false);
   };
-  
-  const value = { user, isLoading, login, register, logout, updateUser, completeSellerOnboarding };
 
-  // App is always ready to render, no initial loading from storage.
+  const toggleFollow = (vendorId: string) => {
+    if (!user) return;
+    setUser(currentUser => {
+        if (!currentUser) return null;
+        const isFollowing = currentUser.following.includes(vendorId);
+        const updatedFollowing = isFollowing
+            ? currentUser.following.filter(id => id !== vendorId)
+            : [...currentUser.following, vendorId];
+        return { ...currentUser, following: updatedFollowing };
+    });
+  };
+  
+  const value = { user, isLoading, login, register, logout, updateUser, completeSellerOnboarding, toggleFollow };
+
   return (
     <AuthContext.Provider value={value}>
       {children}

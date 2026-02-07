@@ -3,9 +3,10 @@ import { Product, Vendor } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { VendorCard } from '../components/VendorCard';
 import { CATEGORIES, MOCK_VENDORS } from '../constants';
-import { Search, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { fetchProducts } from '../api/api';
 import { navigate, useQuery } from '../router';
+import { useAuth } from '../hooks/useAuth';
 
 export const HomePage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -14,16 +15,18 @@ export const HomePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
   
+  const { user } = useAuth();
   const query = useQuery();
   const searchQuery = query.get('q') || '';
   const productsGridRef = useRef<HTMLDivElement>(null);
+  
+  const HOME_CATEGORIES = user ? ['All', 'Following', ...CATEGORIES.slice(1)] : CATEGORIES;
+
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        // In a real app, you might fetch vendors too, but we'll use the mock constant for now.
-        // TODO Backend: Replace MOCK_PRODUCTS with GET /api/products?search=...&category=...
         const fetchedProducts = await fetchProducts();
         setProducts(fetchedProducts);
         setVendors(MOCK_VENDORS);
@@ -40,15 +43,21 @@ export const HomePage: React.FC = () => {
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+      const matchesCategory = selectedCategory === 'All' || selectedCategory === 'Following' || product.category === selectedCategory;
+      
+      const matchesFollowing = selectedCategory === 'Following' 
+        ? user?.following.includes(product.vendorId) 
+        : true;
+      
       const matchesSearch = searchQuery 
         ? product.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
           product.vendorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
           product.description.toLowerCase().includes(searchQuery.toLowerCase())
         : true;
-      return matchesCategory && matchesSearch;
+        
+      return matchesCategory && matchesSearch && matchesFollowing;
     });
-  }, [products, selectedCategory, searchQuery]);
+  }, [products, selectedCategory, searchQuery, user]);
 
   const handleExploreClick = () => {
     productsGridRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -57,7 +66,6 @@ export const HomePage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
-      {/* Hero Section */}
       <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 my-12 lg:my-20">
         <div className="lg:w-1/2 text-center lg:text-left">
           <h1 className="font-heading font-extrabold text-5xl md:text-7xl tracking-tighter text-neutral-900">
@@ -92,9 +100,8 @@ export const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Category Pills */}
       <div className="flex items-center gap-3 overflow-x-auto no-scrollbar mb-8 pb-2">
-        {CATEGORIES.map(cat => (
+        {HOME_CATEGORIES.map(cat => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
@@ -109,7 +116,6 @@ export const HomePage: React.FC = () => {
         ))}
       </div>
 
-      {/* Product Grid */}
       <div ref={productsGridRef} className="mb-16">
         <h2 className="text-2xl font-bold text-neutral-900 mb-4 tracking-tight">Fresh Finds</h2>
         {isLoading ? (
@@ -141,7 +147,6 @@ export const HomePage: React.FC = () => {
         )}
       </div>
 
-      {/* Vendor Carousel */}
       <div className="mb-16">
         <h2 className="text-2xl font-bold text-neutral-900 mb-4 tracking-tight">Featured Shops</h2>
         <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-4">

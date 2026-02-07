@@ -9,6 +9,7 @@ export interface Vendor {
   description: string;
   joinedDate: string;
   verified: boolean;
+  followerCount: number;
 }
 
 export interface Product {
@@ -23,6 +24,7 @@ export interface Product {
   sizes?: string[];
   condition?: 'New' | 'Like New' | 'Good' | 'Fair';
   stock: number;
+  likeCount: number;
 }
 
 export interface CartItem {
@@ -51,6 +53,7 @@ export interface User {
   emailVerified?: boolean;
   role: 'buyer' | 'seller';
   vendorId?: string; // Only if role is 'seller'
+  following: string[]; // Array of vendor IDs
   address?: {
     street: string;
     city: string;
@@ -100,6 +103,33 @@ export interface Order {
 }
 
 
-// ViewState is no longer needed for routing, but might be useful for other UI states.
-// For now, it's removed to reflect the new routing architecture.
-// export type ViewState = ...
+// --- Messaging and Offer types ---
+export interface Offer {
+    amount: number;
+    status: 'pending' | 'accepted' | 'declined';
+}
+
+export interface Message {
+    id: string;
+    conversationId: string;
+    senderId: string; // 'userId' or 'system'
+    text: string;
+    timestamp: string;
+    offer?: Offer;
+}
+
+export interface Conversation {
+    id: string;
+    participantIds: string[];
+    // For simplicity, store participant details directly. In a real app, you'd fetch this.
+    participants: { [userId: string]: { name: string; avatar: string } };
+    productId: string;
+    productTitle: string;
+    productImage: string;
+    lastMessage: {
+        text: string;
+        timestamp: string;
+        senderId: string;
+    };
+    unread: boolean;
+}
