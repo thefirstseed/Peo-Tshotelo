@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { ArrowLeft, User, ChevronRight, Store, CreditCard, Shield, MapPin, Heart, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, User, ChevronRight, Store, CreditCard, Shield, MapPin, Heart, ShoppingBag, Bell } from 'lucide-react';
 import { navigate } from '../router';
 
 const SettingsLink: React.FC<{ title: string; description: string; icon: React.ElementType; onClick: () => void; }> = ({ title, description, icon: Icon, onClick }) => (
@@ -52,6 +52,12 @@ export const ProfileSettingsPage: React.FC = () => {
                             description="Change your password."
                             icon={Shield}
                             onClick={() => navigate('/settings/security')}
+                        />
+                        <SettingsLink 
+                            title="Notifications" 
+                            description="Choose how you're notified."
+                            icon={Bell}
+                            onClick={() => navigate('/settings/notifications')}
                         />
                         <SettingsLink 
                             title="Addresses" 

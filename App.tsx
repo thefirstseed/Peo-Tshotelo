@@ -25,6 +25,7 @@ import { BuyerPaymentsPage } from './pages/BuyerPaymentsPage';
 import { PurchaseHistoryPage } from './pages/PurchaseHistoryPage';
 import { InboxPage } from './pages/InboxPage';
 import { ConversationPage } from './pages/ConversationPage';
+import { NotificationsSettingsPage } from './pages/NotificationsSettingsPage';
 
 export default function App() {
   return (
@@ -94,6 +95,11 @@ export default function App() {
            <Route path="/settings/security" component={() => (
             <ProtectedRoute roles={['seller', 'buyer']}>
               <SignInAndSecurityPage />
+            </ProtectedRoute>
+          )} />
+           <Route path="/settings/notifications" component={() => (
+            <ProtectedRoute roles={['seller', 'buyer']}>
+              <NotificationsSettingsPage />
             </ProtectedRoute>
           )} />
            <Route path="/settings/payments" component={() => (
