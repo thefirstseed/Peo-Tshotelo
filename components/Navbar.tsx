@@ -36,10 +36,10 @@ const UserMenu: React.FC = () => {
                 <div className="w-8 h-8 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-bold">
                     {user.name.charAt(0)}
                 </div>
-                <span>Hi, {user.name.split(' ')[0]}</span>
+                <span className="hidden sm:inline">Hi, {user.name.split(' ')[0]}</span>
             </button>
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-neutral-200/80 py-2 z-50">
+                <div className="absolute right-0 mt-2 w-56 bg-white/90 backdrop-blur-md rounded-xl shadow-2xl border border-neutral-200/80 py-2 z-50">
                     <button onClick={() => handleMenuClick('/profile')} className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 flex items-center gap-2"><Settings className="w-4 h-4"/> Profile Settings</button>
                     {user.role === 'seller' && <button onClick={() => handleMenuClick('/dashboard')} className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100 flex items-center gap-2"><LayoutDashboard className="w-4 h-4" /> Seller Dashboard</button>}
                     <div className="border-t my-1 border-neutral-100"></div>
@@ -94,12 +94,12 @@ export const Navbar: React.FC = () => {
 
   return (
     <>
-      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-neutral-200 z-50 h-16">
+      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-neutral-200/80 z-50 h-16">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           
           <div className="flex items-center gap-2 cursor-pointer flex-shrink-0" onClick={() => handleNavLinkClick('/')}>
-            <div className="w-8 h-8 bg-[#E85D3B] rounded-md flex items-center justify-center text-white font-bold text-lg font-heading">K</div>
-            <span className="text-xl font-bold tracking-tight text-neutral-900">Kulture Kloze</span>
+            <div className="w-8 h-8 bg-primary-500 rounded-md flex items-center justify-center text-white font-extrabold text-lg font-heading">K</div>
+            <span className="text-xl font-extrabold tracking-tight text-neutral-900">Kulture Kloze</span>
           </div>
 
           <div className="hidden md:flex items-center justify-center flex-1 gap-6 text-sm font-medium">

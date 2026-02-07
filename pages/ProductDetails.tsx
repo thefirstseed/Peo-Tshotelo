@@ -151,7 +151,7 @@ export const ProductDetailsPage: React.FC = () => {
   return (
     <>
     <div className="max-w-7xl mx-auto px-0 md:px-4 lg:px-8 bg-white md:bg-transparent min-h-screen">
-      <div className="flex flex-col md:flex-row gap-0 md:gap-8 bg-white md:rounded-2xl overflow-hidden md:shadow-lg md:border border-neutral-200/50 md:mt-4 md:p-6">
+      <div className="flex flex-col md:flex-row gap-0 md:gap-8 bg-white md:rounded-2xl overflow-hidden md:shadow-xl md:border border-neutral-200/80 md:mt-4 md:p-6">
         
         <div className="absolute top-4 left-4 z-10 md:hidden">
           <button onClick={() => navigate('/')} className="w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-md hover:bg-white"><ArrowLeft className="w-5 h-5 text-neutral-800" /></button>
@@ -177,7 +177,7 @@ export const ProductDetailsPage: React.FC = () => {
         <div className="p-5 md:p-0 md:w-1/2 lg:w-2/5 flex flex-col">
           <div className="hidden md:block mb-4"><button onClick={() => navigate('/')} className="text-neutral-500 hover:text-neutral-900 flex items-center text-sm font-medium"><ArrowLeft className="w-4 h-4 mr-1.5" /> Back to browse</button></div>
           <div className="mb-2"><span className="text-primary-600 text-sm font-semibold tracking-wide uppercase">{product.category}</span></div>
-          <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-2 tracking-tight">{product.title}</h1>
+          <h1 className="font-heading text-2xl md:text-4xl font-bold text-neutral-900 mb-2 tracking-tight">{product.title}</h1>
           <div className="flex items-center gap-4 mb-4">
             <div className="flex items-center gap-2"><StarRating rating={averageRating} /><span className="text-sm text-neutral-600">{reviews.length} review{reviews.length !== 1 ? 's' : ''}</span></div>
             {product.condition && <span className="bg-neutral-100 text-neutral-600 px-2.5 py-1 rounded text-xs font-medium border border-neutral-200">{product.condition}</span>}
@@ -201,10 +201,10 @@ export const ProductDetailsPage: React.FC = () => {
           {validationError && <div className="flex items-start gap-2 text-xs text-red-600 mb-4 p-2 bg-red-50 rounded-md border border-red-200"><AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" /><span>{validationError}</span></div>}
 
           <div className="grid grid-cols-1 gap-3 mb-8">
-            <button onClick={handleMessageSeller} className="w-full bg-neutral-900 text-white py-3.5 px-6 rounded-full font-semibold flex items-center justify-center gap-2 transition hover:bg-neutral-800"><MessageSquare className="w-5 h-5" /> Message Seller</button>
+            <button onClick={handleMessageSeller} className="w-full bg-neutral-900 text-white py-4 px-6 rounded-full font-semibold flex items-center justify-center gap-2 transition hover:bg-neutral-800"><MessageSquare className="w-5 h-5" /> Message Seller</button>
             <div className="grid grid-cols-5 gap-3">
               <button onClick={handleAddToCart} disabled={!canAddToCart || product.stock === 0 || isAdded}
-                className={`col-span-4 text-white py-3.5 px-6 rounded-full font-semibold transition flex items-center justify-center gap-2 active:scale-95 duration-300 ${isAdded ? 'bg-green-600' : 'bg-primary-500 hover:bg-primary-600 shadow-lg shadow-primary-200'} disabled:bg-neutral-300 disabled:shadow-none disabled:cursor-not-allowed`}>
+                className={`col-span-4 text-white py-4 px-6 rounded-full font-semibold transition flex items-center justify-center gap-2 active:scale-95 duration-300 ${isAdded ? 'bg-green-600' : 'bg-primary-500 hover:bg-primary-600 shadow-lg shadow-primary-300'} disabled:bg-neutral-300 disabled:shadow-none disabled:cursor-not-allowed`}>
                 {product.stock === 0 ? 'Sold Out' : isAdded ? <><Check className="w-5 h-5" /> Added</> : 'Add to Bag'}
               </button>
               <button onClick={handleLikeToggle} className="col-span-1 flex items-center justify-center bg-neutral-100 rounded-full hover:bg-neutral-200 transition-transform active:scale-110" aria-label="Toggle like">

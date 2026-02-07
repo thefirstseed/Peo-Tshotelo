@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { ArrowLeft, User, ChevronRight, Store, CreditCard, Shield, MapPin, Heart, ShoppingBag, Bell } from 'lucide-react';
+import { ArrowLeft, User, ChevronRight, Store, CreditCard, Shield, MapPin, Heart, ShoppingBag, Bell, Users } from 'lucide-react';
 import { navigate } from '../router';
 
 const SettingsLink: React.FC<{ title: string; description: string; icon: React.ElementType; onClick: () => void; }> = ({ title, description, icon: Icon, onClick }) => (
@@ -120,6 +120,12 @@ export const ProfileSettingsPage: React.FC = () => {
                             description="View your saved items."
                             icon={Heart}
                             onClick={() => navigate('/likes')}
+                        />
+                         <SettingsLink 
+                            title="Following" 
+                            description="Manage shops you follow."
+                            icon={Users}
+                            onClick={() => navigate('/following')}
                         />
                     </div>
                 </div>

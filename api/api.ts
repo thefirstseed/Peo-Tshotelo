@@ -15,7 +15,7 @@ let usersDB: User[] = [
   { id: 'user1', name: 'Thrifty Gabs', email: 'seller.gabs@example.com', role: 'seller', vendorId: 'v1', following: [] },
   { id: 'u2', name: 'Kagiso Dlamini', email: 'seller.kagiso@example.com', role: 'seller', vendorId: 'v2', following: [] },
   { id: 'user3', name: 'Boho Finds', email: 'seller.boho@example.com', role: 'seller', vendorId: 'v3', following: [] },
-  { id: 'u1', name: 'Thabo Moeng', email: 'thabo@email.com', role: 'buyer', address: { street: '123 Main Road', city: 'Gaborone', country: 'Botswana' }, following: ['v2'] },
+  { id: 'u1', name: 'Thabo Moeng', email: 'thabo@email.com', role: 'buyer', address: { street: '123 Main Road', city: 'Gaborone', country: 'Botswana' }, following: ['v2', 'v3'] },
   { id: 'u-buyer-demo', name: 'Pula Buyer', email: 'buyer@kulture.com', role: 'buyer', following: [] },
 ];
 let ordersDB: Order[] = [
@@ -140,6 +140,11 @@ export const fetchVendor = async (vendorId: string): Promise<Vendor> => {
       rating: averageRating,
       reviewCount: reviewCount
   };
+};
+
+export const fetchVendorsByIds = async (vendorIds: string[]): Promise<Vendor[]> => {
+    await simulateDelay(400);
+    return vendorsDB.filter(v => vendorIds.includes(v.id));
 };
 
 export const updateVendorProfile = async (vendorId: string, updates: Partial<Vendor>): Promise<Vendor> => {

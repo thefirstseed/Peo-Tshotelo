@@ -25,10 +25,12 @@ import { BuyerPaymentsPage } from './pages/BuyerPaymentsPage';
 import { PurchaseHistoryPage } from './pages/PurchaseHistoryPage';
 import { InboxPage } from './pages/InboxPage';
 import { ConversationPage } from './pages/ConversationPage';
+import { NotificationsSettingsPage } from './pages/NotificationsSettingsPage';
+import { FollowingPage } from './pages/FollowingPage';
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-neutral-100 flex flex-col font-sans text-neutral-800">
+    <div className="min-h-screen flex flex-col font-sans text-neutral-800">
       <Navbar />
       <main className="flex-grow pt-16 pb-20 md:pb-8">
         <Router>
@@ -96,6 +98,11 @@ export default function App() {
               <SignInAndSecurityPage />
             </ProtectedRoute>
           )} />
+           <Route path="/settings/notifications" component={() => (
+            <ProtectedRoute roles={['seller', 'buyer']}>
+              <NotificationsSettingsPage />
+            </ProtectedRoute>
+          )} />
            <Route path="/settings/payments" component={() => (
             <ProtectedRoute roles={['buyer']}>
               <BuyerPaymentsPage />
@@ -109,6 +116,11 @@ export default function App() {
           <Route path="/likes" component={() => (
             <ProtectedRoute roles={['seller', 'buyer']}>
               <LikesPage />
+            </ProtectedRoute>
+          )} />
+           <Route path="/following" component={() => (
+            <ProtectedRoute roles={['buyer', 'seller']}>
+              <FollowingPage />
             </ProtectedRoute>
           )} />
            <Route path="/settings/storefront" component={() => (

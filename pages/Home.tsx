@@ -66,9 +66,9 @@ export const HomePage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
-      <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 my-12 lg:my-20">
+      <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 my-16 lg:my-24">
         <div className="lg:w-1/2 text-center lg:text-left">
-          <h1 className="font-heading font-extrabold text-5xl md:text-7xl tracking-tighter text-neutral-900">
+          <h1 className="font-heading font-black text-5xl md:text-7xl tracking-tighter text-neutral-900">
             HERITAGE
             <br />
             <span className="text-primary-500">REIMAGINED</span>
@@ -95,7 +95,7 @@ export const HomePage: React.FC = () => {
           <img 
             src="https://images.unsplash.com/photo-1555529771-835f59fc5efe?q=80&w=1200&auto=format&fit=crop"
             alt="Clothing on hangers"
-            className="rounded-3xl object-cover w-full h-full aspect-[4/3] lg:aspect-square shadow-2xl shadow-neutral-200"
+            className="rounded-3xl object-cover w-full h-full aspect-[4/3] lg:aspect-square shadow-2xl shadow-neutral-300"
           />
         </div>
       </div>
@@ -105,10 +105,10 @@ export const HomePage: React.FC = () => {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${
+            className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-medium transition-all ${
               selectedCategory === cat 
-                ? 'bg-neutral-900 text-white' 
-                : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-100'
+                ? 'bg-neutral-900 text-white shadow-md' 
+                : 'bg-white border border-neutral-200/80 text-neutral-700 hover:bg-neutral-100'
             }`}
           >
             {cat}
@@ -116,8 +116,8 @@ export const HomePage: React.FC = () => {
         ))}
       </div>
 
-      <div ref={productsGridRef} className="mb-16">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-4 tracking-tight">Fresh Finds</h2>
+      <div ref={productsGridRef} className="my-16">
+        <h2 className="text-2xl font-bold text-neutral-900 mb-6 tracking-tight">Fresh Finds</h2>
         {isLoading ? (
            <div className="text-center py-20">Loading products...</div>
         ) : error ? (
@@ -147,9 +147,9 @@ export const HomePage: React.FC = () => {
         )}
       </div>
 
-      <div className="mb-16">
-        <h2 className="text-2xl font-bold text-neutral-900 mb-4 tracking-tight">Featured Shops</h2>
-        <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-4">
+      <div className="my-16">
+        <h2 className="text-2xl font-bold text-neutral-900 mb-6 tracking-tight">Featured Shops</h2>
+        <div className="flex items-center gap-4 overflow-x-auto no-scrollbar pb-4 -mx-4 px-4">
           {vendors.map(vendor => (
             <VendorCard key={vendor.id} vendor={vendor} />
           ))}

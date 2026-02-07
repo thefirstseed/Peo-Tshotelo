@@ -18,21 +18,23 @@ export const LikesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Load likes from localStorage when user logs in or page loads
   useEffect(() => {
+    // This effect ensures that liked items are correctly managed when the user logs in or out.
+    // By first clearing the state, we prevent the previous user's likes from persisting
+    // during the transition to a new user session.
+    
+    // Always reset state on user change to prevent data leakage between sessions.
+    setLikedItems([]);
+
     if (user) {
       try {
         const savedLikes = localStorage.getItem(`kk-likes-${user.id}`);
         if (savedLikes) {
           setLikedItems(JSON.parse(savedLikes));
-        } else {
-          setLikedItems([]); // No saved likes for this user
         }
       } catch (error) {
-        console.error("Failed to parse likes from localStorage", error);
-        setLikedItems([]);
+        console.error("Failed to parse likes from localStorage for user:", user.id, error);
+        // State is already cleared, so we are safe.
       }
-    } else {
-      // Clear likes when user logs out
-      setLikedItems([]);
     }
   }, [user]);
 

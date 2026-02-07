@@ -34,7 +34,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div 
       onClick={handleClick}
-      className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 ease-in-out cursor-pointer flex flex-col h-full hover:-translate-y-1"
+      className="group bg-white rounded-xl overflow-hidden border border-neutral-200/60 shadow-sm hover:shadow-xl transition-all duration-300 ease-in-out cursor-pointer flex flex-col h-full hover:-translate-y-1.5"
     >
       <div className="relative aspect-square overflow-hidden bg-neutral-100">
         <img 
@@ -44,7 +44,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         />
         
         {product.stock === 0 && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <span className="bg-white text-neutral-800 text-xs font-bold px-3 py-1.5 rounded-sm uppercase tracking-wider">
               Sold Out
             </span>
@@ -70,8 +70,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       
       <div className="p-4 flex flex-col flex-grow">
         <div className="flex justify-between items-start mb-1">
-          <h3 className="font-semibold text-neutral-800 leading-snug pr-2">{product.title}</h3>
-          <div className="flex items-center text-xs text-neutral-500">
+          <h3 className="font-bold text-neutral-800 leading-snug pr-2">{product.title}</h3>
+          <div className="flex items-center text-xs text-neutral-500 flex-shrink-0">
              <Heart className="w-3.5 h-3.5 mr-1" />
              <span>{product.likeCount}</span>
           </div>
@@ -80,7 +80,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <p className="text-sm text-neutral-600 mb-2 truncate">{product.vendorName}</p>
         
         <div className="mt-auto flex items-center justify-between">
-          <span className="font-bold text-lg text-neutral-900">P {product.price.toFixed(2)}</span>
+          <span className="font-bold text-xl text-neutral-900">P {product.price.toFixed(2)}</span>
           <div className="flex items-center text-xs text-neutral-500">
             <MapPin className="w-3.5 h-3.5 mr-1" />
             <span>Gabs</span>
