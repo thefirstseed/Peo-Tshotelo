@@ -27,6 +27,7 @@ import { InboxPage } from './pages/InboxPage';
 import { ConversationPage } from './pages/ConversationPage';
 import { NotificationsSettingsPage } from './pages/NotificationsSettingsPage';
 import { FollowingPage } from './pages/FollowingPage';
+import { CategoryPage } from './pages/CategoryPage';
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
       <main className="flex-grow pt-16 pb-20 md:pb-8">
         <Router>
           <Route path="/" component={HomePage} />
+          <Route path="/category/:slug" component={CategoryPage} />
           
           {/* CRITICAL FIX: Specific routes must come before parameterized routes */}
           <Route path="/products/new" component={() => (

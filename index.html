@@ -40,6 +40,15 @@
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
               heading: ['Manrope', 'sans-serif'],
+            },
+            animation: {
+              'fade-in-down': 'fadeInDown 0.2s ease-out forwards',
+            },
+            keyframes: {
+              fadeInDown: {
+                '0%': { opacity: 0, transform: 'translateY(-10px)' },
+                '100%': { opacity: 1, transform: 'translateY(0)' },
+              }
             }
           }
         }
@@ -59,7 +68,8 @@
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
     "jsonwebtoken": "https://esm.sh/jsonwebtoken@^9.0.3",
     "recharts": "https://aistudiocdn.com/recharts@^2.12.7",
-    "react-image-crop": "https://esm.sh/react-image-crop@11.0.5"
+    "react-image-crop": "https://esm.sh/react-image-crop@11.0.5",
+    "path": "https://esm.sh/path@^0.12.7"
   }
 }
 </script>

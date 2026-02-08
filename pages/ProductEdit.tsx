@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, Tag, Users } from 'lucide-react';
 import { Product } from '../types';
-import { CATEGORIES } from '../constants';
+import { PRODUCT_CATEGORIES } from '../constants';
 import { useParams, navigate } from '../router';
 import { fetchProduct, createOrUpdateProduct } from '../api/api';
 import { useAuth } from '../hooks/useAuth';
 import { ImageUploader } from '../components/ImageUploader';
 
 // --- Reusable Form Components ---
-const PillSelector = <T extends string>({ label, options, selected, onSelect }: { label: string, options: T[], selected: T, onSelect: (value: T) => void }) => (
+const PillSelector = <T extends string>({ label, options, selected, onSelect, icon: Icon }: { label: string, options: T[], selected: T, onSelect: (value: T) => void, icon?: React.ElementType }) => (
   <div>
-    <label className="block text-sm font-medium text-neutral-700 mb-2">{label}</label>
+    <label className="flex items-center text-sm font-medium text-neutral-700 mb-2">
+      {Icon && <Icon className="w-4 h-4 mr-2 text-neutral-400" />}
+      {label}
+    </label>
     <div className="flex flex-wrap gap-2">
       {options.map(option => (
         <button
@@ -58,8 +61,8 @@ export const ProductEditPage: React.FC = () => {
   const { user } = useAuth();
   const isEditing = !!productId;
 
-  const [formData, setFormData] = useState<Omit<Product, 'id' | 'vendorId' | 'vendorName'>>({
-    title: '', price: 0, description: '', category: 'Clothing', imageUrls: [], condition: 'Like New', sizes: [], stock: 1
+  const [formData, setFormData] = useState<Omit<Product, 'id' | 'vendorId' | 'vendorName' | 'likeCount'>>({
+    title: '', price: 0, description: '', category: 'Clothing', imageUrls: [], condition: 'Like New', sizes: [], stock: 1, department: 'women', brand: ''
   });
   const [priceInput, setPriceInput] = useState(''); // State for the price text input
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
@@ -70,7 +73,6 @@ export const ProductEditPage: React.FC = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Redirect if user is not a fully onboarded seller and is trying to create a new product.
     if (!isEditing && user && !user.vendorId) {
         navigate('/sell');
         return;
@@ -89,12 +91,13 @@ export const ProductEditPage: React.FC = () => {
             price: product.price,
             description: product.description,
             category: product.category,
+            department: product.department,
+            brand: product.brand,
             imageUrls: product.imageUrls,
             condition: product.condition || 'Good',
             sizes: product.sizes || [],
             stock: product.stock,
           });
-          // Sync the text input with the fetched price
           setPriceInput(product.price > 0 ? product.price.toString() : '');
         })
         .catch((err) => {
@@ -105,11 +108,9 @@ export const ProductEditPage: React.FC = () => {
     }
   }, [productId, user, isEditing]);
 
-  // Generic handler for most form inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     if (e.target.type === 'number') {
-      // Ensure non-negative integers for stock
       const numValue = Math.max(0, parseInt(value, 10) || 0);
       setFormData(prev => ({ ...prev, [name]: numValue }));
     } else {
@@ -117,10 +118,8 @@ export const ProductEditPage: React.FC = () => {
     }
   };
 
-  // Specific handler for the price input to manage text and number states
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    // Regex to allow only numbers and a single decimal point with up to 2 decimal places
     if (/^\d*\.?\d{0,2}$/.test(value)) {
         setPriceInput(value);
         setFormData(prev => ({...prev, price: parseFloat(value) || 0}));
@@ -152,6 +151,10 @@ export const ProductEditPage: React.FC = () => {
         setSaveError('Please add at least one product image.');
         return;
     }
+    if (formData.brand.trim() === '') {
+        setSaveError("Please enter a brand name, or 'Unbranded' if it doesn't have one.");
+        return;
+    }
     
     setIsSaving(true);
     try {
@@ -159,7 +162,7 @@ export const ProductEditPage: React.FC = () => {
       setTimeout(() => {
         setIsSaving(false);
         navigate('/dashboard');
-      }, 1500); // Wait for the "Saved" animation to finish
+      }, 1500);
     } catch (err) {
       setSaveError("Failed to save product. Please check your connection and try again.");
       console.error("Save product failed:", err);
@@ -167,7 +170,6 @@ export const ProductEditPage: React.FC = () => {
     }
   };
   
-  // Render a redirecting message if user is not an onboarded seller trying to create a product
   if (!isEditing && user && !user.vendorId) {
     return <div className="text-center py-10">Redirecting to seller setup...</div>;
   }
@@ -198,24 +200,36 @@ export const ProductEditPage: React.FC = () => {
               <label htmlFor="title" className="block text-sm font-medium text-neutral-700 mb-1">Product Title</label>
               <input type="text" name="title" id="title" required value={formData.title} onChange={handleChange} placeholder="e.g. Vintage Denim Jacket" className={inputStyles}/>
             </div>
+             <div>
+              <label htmlFor="brand" className="block text-sm font-medium text-neutral-700 mb-1">Brand</label>
+              <input type="text" name="brand" id="brand" required value={formData.brand} onChange={handleChange} placeholder="e.g. Nike, Zara, or 'Unbranded'" className={inputStyles}/>
+            </div>
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-neutral-700 mb-1">Description</label>
               <textarea name="description" id="description" required value={formData.description} onChange={handleChange} rows={4} placeholder="Describe the item's condition, material, etc." className={inputStyles}></textarea>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <PillSelector 
+                    label="Department"
+                    icon={Users}
+                    options={['women', 'men', 'kids']}
+                    selected={formData.department}
+                    onSelect={(v) => setFormData(p => ({...p, department: v}))}
+                />
                 <PillSelector 
                     label="Category"
-                    options={CATEGORIES.filter(c => c !== 'All') as Product['category'][]}
+                    icon={Tag}
+                    options={PRODUCT_CATEGORIES as any}
                     selected={formData.category}
                     onSelect={(v) => setFormData(p => ({...p, category: v}))}
                 />
-                <PillSelector 
-                    label="Condition"
-                    options={['New', 'Like New', 'Good', 'Fair']}
-                    selected={formData.condition!}
-                    onSelect={(v) => setFormData(p => ({...p, condition: v}))}
-                />
             </div>
+            <PillSelector 
+                label="Condition"
+                options={['New', 'Like New', 'Good', 'Fair']}
+                selected={formData.condition!}
+                onSelect={(v) => setFormData(p => ({...p, condition: v}))}
+            />
             <CheckboxGrid 
                 label="Available Sizes (optional)"
                 options={['XS', 'S', 'M', 'L', 'XL', '38', '40', '42']}

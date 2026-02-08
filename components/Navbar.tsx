@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ShoppingBag, Heart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, Settings, MessageSquare } from 'lucide-react';
+import { ShoppingBag, Heart, Search, Menu, X, User as UserIcon, LogOut, LayoutDashboard, Settings, MessageSquare, ArrowRight } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { navigate } from '../router';
 import { useLikes } from '../hooks/useLikes';
+import { NAVIGATION_LINKS } from '../constants';
+import { MegaMenuColumn } from '../types';
 
 const UserMenu: React.FC = () => {
     const { user, logout } = useAuth();
@@ -50,14 +52,73 @@ const UserMenu: React.FC = () => {
     );
 };
 
+// MegaMenu component is encapsulated within Navbar for simplicity of this implementation.
+// In a larger application, it would be a separate file.
+const MegaMenu: React.FC<{ columns?: MegaMenuColumn[]; onClose: () => void; }> = ({ columns, onClose }) => {
+  if (!columns) return null;
+
+  const handleLinkClick = (href: string) => {
+    navigate(href);
+    onClose();
+  };
+
+  return (
+    <div className="absolute top-full left-0 w-full bg-white/95 backdrop-blur-md shadow-2xl border-t border-neutral-200/80 animate-fade-in-down">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-4 gap-8">
+          {columns.map((column, index) => (
+            <div key={index}>
+              <h3 className="font-semibold text-sm uppercase tracking-wider text-neutral-800 mb-4">{column.title}</h3>
+              <ul className="space-y-3">
+                {column.links.map((link) => (
+                  <li key={link.label}>
+                    <button
+                      onClick={() => handleLinkClick(link.href)}
+                      className="text-neutral-600 hover:text-primary-600 transition-colors text-left text-sm"
+                    >
+                      {link.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 export const Navbar: React.FC = () => {
   const { totalItems } = useCart();
   const { likesCount } = useLikes();
+  // FIX: Destructure `logout` from `useAuth` so it's available for the mobile menu's logout button.
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // State for desktop mega menu
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const menuTimerRef = useRef<number | null>(null);
 
+  const handleMouseEnter = (label: string) => {
+    if (menuTimerRef.current) clearTimeout(menuTimerRef.current);
+    setActiveMenu(label);
+  };
+
+  const handleMouseLeave = () => {
+    menuTimerRef.current = window.setTimeout(() => {
+      setActiveMenu(null);
+    }, 200); // 200ms delay to prevent flickering
+  };
+
+  const handleNavLinkClick = (path: string) => {
+    navigate(path);
+    setIsMenuOpen(false); // for mobile
+    setActiveMenu(null); // for desktop
+  };
+  
   const handleSellOrDashboardClick = () => {
     if (user?.role === 'seller') {
       navigate('/dashboard');
@@ -78,23 +139,11 @@ export const Navbar: React.FC = () => {
     setSearchQuery('');
   };
 
-  const handleNavLinkClick = (path: string) => {
-    navigate(path);
-    setIsMenuOpen(false);
-  };
+  const activeNavData = NAVIGATION_LINKS.find(link => link.label === activeMenu);
   
-  const NavLink: React.FC<{children: React.ReactNode; onClick: () => void; className?: string}> = ({ children, onClick, className = '' }) => (
-    <button
-      onClick={onClick}
-      className={`text-neutral-600 hover:text-primary-600 transition-colors ${className}`}
-    >
-      {children}
-    </button>
-  );
-
   return (
     <>
-      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-neutral-200/80 z-50 h-16">
+      <nav onMouseLeave={handleMouseLeave} className="fixed top-0 w-full bg-white/80 backdrop-blur-md border-b border-neutral-200/80 z-50 h-16">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
           
           <div className="flex items-center gap-2 cursor-pointer flex-shrink-0" onClick={() => handleNavLinkClick('/')}>
@@ -102,9 +151,23 @@ export const Navbar: React.FC = () => {
             <span className="text-xl font-extrabold tracking-tight text-neutral-900">Kulture Kloze</span>
           </div>
 
-          <div className="hidden md:flex items-center justify-center flex-1 gap-6 text-sm font-medium">
-            <NavLink onClick={() => handleNavLinkClick('/')}>Browse</NavLink>
-            <NavLink onClick={handleSellOrDashboardClick}>{user?.role === 'seller' ? 'Dashboard' : 'Sell'}</NavLink>
+          <div className="hidden md:flex items-center justify-center flex-1 gap-2 text-sm font-medium">
+             {NAVIGATION_LINKS.map(link => {
+                const isActive = activeMenu === link.label && link.megaMenu;
+                return (
+                  <button
+                    key={link.label}
+                    onMouseEnter={() => handleMouseEnter(link.label)}
+                    onClick={() => handleNavLinkClick(link.href)}
+                    className={`px-4 py-2 rounded-md transition-colors duration-200
+                      ${link.label === 'Sale' ? 'text-red-600 font-bold hover:bg-red-50' : 'text-neutral-600 hover:text-primary-600'}
+                      ${isActive ? 'bg-neutral-900 text-white' : 'hover:bg-neutral-100'}
+                    `}
+                  >
+                    {link.label}
+                  </button>
+                )
+            })}
           </div>
 
           <div className="hidden md:flex items-center gap-1">
@@ -112,7 +175,7 @@ export const Navbar: React.FC = () => {
               <UserMenu />
             ) : (
               <div className="flex items-center gap-2 text-sm font-medium">
-                <NavLink onClick={() => handleNavLinkClick('/login')}>Login</NavLink>
+                <button onClick={() => handleNavLinkClick('/login')} className="text-neutral-600 hover:text-primary-600 transition-colors">Login</button>
                 <button onClick={() => handleNavLinkClick('/register')} className="bg-neutral-900 text-white px-4 py-2 rounded-full hover:bg-neutral-800 transition-colors">
                     Sign Up
                 </button>
@@ -191,6 +254,9 @@ export const Navbar: React.FC = () => {
             </button>
           </div>
         </div>
+        {activeNavData?.megaMenu && (
+            <MegaMenu columns={activeNavData.megaMenu} onClose={() => setActiveMenu(null)} />
+        )}
       </nav>
 
       {isMenuOpen && (
@@ -212,9 +278,18 @@ export const Navbar: React.FC = () => {
                 </form>
 
                 <nav className="flex flex-col items-start space-y-3 font-medium text-lg">
-                    <NavLink onClick={() => handleNavLinkClick('/')}>Browse</NavLink>
-                    <NavLink onClick={handleSellOrDashboardClick}>{user?.role === 'seller' ? 'Dashboard' : 'Sell'}</NavLink>
-                    {user && <NavLink onClick={() => handleNavLinkClick('/profile')}>Profile Settings</NavLink>}
+                    {NAVIGATION_LINKS.map(link => (
+                         <button
+                            key={link.label}
+                            onClick={() => handleNavLinkClick(link.href)}
+                            className={`w-full text-left p-2 rounded-md
+                              ${link.label === 'Sale' ? 'text-red-600 font-bold' : 'text-neutral-700 hover:bg-neutral-100'}`}
+                          >
+                            {link.label}
+                          </button>
+                    ))}
+                    <button onClick={handleSellOrDashboardClick} className="w-full text-left p-2 rounded-md text-neutral-700 hover:bg-neutral-100">{user?.role === 'seller' ? 'Dashboard' : 'Sell'}</button>
+                    {user && <button onClick={() => handleNavLinkClick('/profile')} className="w-full text-left p-2 rounded-md text-neutral-700 hover:bg-neutral-100">Profile Settings</button>}
                 </nav>
 
                 <div className="border-t border-neutral-200 pt-4 space-y-3">

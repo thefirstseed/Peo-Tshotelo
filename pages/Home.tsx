@@ -52,7 +52,8 @@ export const HomePage: React.FC = () => {
       const matchesSearch = searchQuery 
         ? product.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
           product.vendorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.description.toLowerCase().includes(searchQuery.toLowerCase())
+          product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.brand.toLowerCase().includes(searchQuery.toLowerCase())
         : true;
         
       return matchesCategory && matchesSearch && matchesFollowing;

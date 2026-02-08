@@ -110,9 +110,9 @@ export const createOrUpdateProduct = async (
       id: `p${Date.now()}`,
       vendorId: vendor.id,
       vendorName: vendor.name,
-      ...productData,
-      imageUrls: [...productData.imageUrls, ...newImageUrls],
       likeCount: 0,
+      ...productData, // includes department and brand now
+      imageUrls: [...productData.imageUrls, ...newImageUrls],
     };
     productsDB.unshift(newProduct);
     return newProduct;

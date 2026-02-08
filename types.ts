@@ -20,7 +20,9 @@ export interface Product {
   vendorName: string; // Denormalized for simpler display
   description: string;
   imageUrls: string[];
-  category: 'Clothing' | 'Accessories' | 'Home' | 'Art' | 'Services';
+  category: string; // Updated from union type to string for flexibility
+  department: 'women' | 'men' | 'kids';
+  brand: string;
   sizes?: string[];
   condition?: 'New' | 'Like New' | 'Good' | 'Fair';
   stock: number;
@@ -132,4 +134,21 @@ export interface Conversation {
         senderId: string;
     };
     unread: boolean;
+}
+
+// --- Navigation Types ---
+export interface MegaMenuLink {
+  label: string;
+  href: string;
+}
+
+export interface MegaMenuColumn {
+  title: string;
+  links: MegaMenuLink[];
+}
+
+export interface NavigationLink {
+  label: string;
+  href: string;
+  megaMenu?: MegaMenuColumn[];
 }
