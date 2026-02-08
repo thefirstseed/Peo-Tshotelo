@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Product, Vendor, User, Review } from '../types';
 import { ArrowLeft, Star, ShieldCheck, Truck, ChevronLeft, ChevronRight, Check, Heart, AlertTriangle, MessageSquare } from 'lucide-react';
-import { fetchProduct, fetchVendor, fetchUserByVendorId, fetchReviewsByProduct, submitReview, startConversation } from '../api/api';
+import { fetchProduct, fetchVendor, fetchUserByVendorId, fetchReviewsByProduct, submitReview, startConversation, hasUserPurchasedProduct } from '../api/api';
 import { navigate, useParams } from '../router';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
@@ -27,6 +27,10 @@ export const ProductDetailsPage: React.FC = () => {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // State for review eligibility
+  const [canLeaveReview, setCanLeaveReview] = useState(false);
+  const [isCheckingPurchase, setIsCheckingPurchase] = useState(true);
+
   // State for new review form
   const [newReviewRating, setNewReviewRating] = useState(0);
   const [newReviewComment, setNewReviewComment] = useState('');
@@ -47,6 +51,7 @@ export const ProductDetailsPage: React.FC = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
+        setIsCheckingPurchase(true);
         const [fetchedProduct, fetchedReviews] = await Promise.all([
           fetchProduct(productId),
           fetchReviewsByProduct(productId)
@@ -55,6 +60,14 @@ export const ProductDetailsPage: React.FC = () => {
         setProduct(fetchedProduct);
         setReviews(fetchedReviews);
         setCurrentImageIndex(0);
+
+        if (user) {
+            hasUserPurchasedProduct(user.id, productId)
+                .then(setCanLeaveReview)
+                .finally(() => setIsCheckingPurchase(false));
+        } else {
+            setIsCheckingPurchase(false);
+        }
         
         if (fetchedProduct.vendorId) {
           const [fetchedVendor, fetchedVendorUser] = await Promise.all([
@@ -67,13 +80,14 @@ export const ProductDetailsPage: React.FC = () => {
         setError(null);
       } catch (err) {
         setError(err.message || "Failed to load product details.");
+        setIsCheckingPurchase(false);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, [productId]);
+  }, [productId, user]);
 
   const handleAddToCart = () => {
     if (!product || product.stock === 0) return;
@@ -140,6 +154,37 @@ export const ProductDetailsPage: React.FC = () => {
         </button>
     </div>
   );
+  
+  const ReviewFormSection: React.FC = () => {
+    if (isCheckingPurchase) {
+      return <div className="text-center py-4 text-neutral-500 text-sm">Checking purchase history...</div>;
+    }
+    
+    if (user) {
+      if (canLeaveReview) {
+        return (
+          <form onSubmit={handleReviewSubmit} className="mb-8 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+              <h3 className="font-semibold mb-2">Leave a Review</h3>
+              {reviewError && <div className="flex items-start gap-2 text-xs text-red-600 mb-3 p-2 bg-red-50 rounded-md border border-red-200"><AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" /><span>{reviewError}</span></div>}
+              <StarRating rating={newReviewRating} onRatingChange={setNewReviewRating} isInteractive />
+              <textarea value={newReviewComment} onChange={(e) => setNewReviewComment(e.target.value)} placeholder="Share your thoughts on this product..." className="w-full mt-3 border border-neutral-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none transition" rows={3} />
+              <div className="text-right mt-2"><button type="submit" disabled={isSubmittingReview} className="bg-neutral-900 text-white px-5 py-2 rounded-lg font-semibold text-sm hover:bg-neutral-800 disabled:opacity-70">{isSubmittingReview ? 'Submitting...' : 'Submit Review'}</button></div>
+          </form>
+        );
+      }
+      return (
+        <div className="mb-8 p-4 text-center bg-neutral-50 rounded-lg border border-neutral-200 text-sm">
+          <p>You must purchase and receive this item to leave a review.</p>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="mb-8 p-4 text-center bg-neutral-50 rounded-lg border border-neutral-200 text-sm">
+        <p>You must be <button onClick={() => navigate('/login')} className="font-semibold text-primary-600 hover:underline">logged in</button> to leave a review.</p>
+      </div>
+    );
+  };
 
   if (isLoading) return <div className="text-center py-20">Loading...</div>;
   if (error) return <ErrorDisplay message={error} />;
@@ -233,16 +278,7 @@ export const ProductDetailsPage: React.FC = () => {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-neutral-200/80">
             <h2 className="text-2xl font-bold mb-6">Reviews ({reviews.length})</h2>
-            {user ? (
-                <form onSubmit={handleReviewSubmit} className="mb-8 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
-                    <h3 className="font-semibold mb-2">Leave a Review</h3>
-                    {reviewError && <div className="flex items-start gap-2 text-xs text-red-600 mb-3 p-2 bg-red-50 rounded-md border border-red-200"><AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" /><span>{reviewError}</span></div>}
-                    <StarRating rating={newReviewRating} onRatingChange={setNewReviewRating} isInteractive />
-                    <textarea value={newReviewComment} onChange={(e) => setNewReviewComment(e.target.value)} placeholder="Share your thoughts on this product..." className="w-full mt-3 border border-neutral-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary-500 focus:outline-none transition" rows={3} />
-                    <div className="text-right mt-2"><button type="submit" disabled={isSubmittingReview} className="bg-neutral-900 text-white px-5 py-2 rounded-lg font-semibold text-sm hover:bg-neutral-800 disabled:opacity-70">{isSubmittingReview ? 'Submitting...' : 'Submit Review'}</button></div>
-                </form>
-            ) : <div className="mb-8 p-4 text-center bg-neutral-50 rounded-lg border border-neutral-200 text-sm"><p>You must be <button onClick={() => navigate('/login')} className="font-semibold text-primary-600 hover:underline">logged in</button> to leave a review.</p></div>}
-            
+            <ReviewFormSection />
             <div className="space-y-6">
                 {reviews.length > 0 ? reviews.map(review => (
                     <div key={review.id} className="flex gap-4 border-t border-neutral-100 pt-6 first:border-t-0 first:pt-0">

@@ -222,6 +222,17 @@ export const fetchOrdersByUser = async (userId: string): Promise<Order[]> => {
     return [...ordersDB].filter(order => order.userId === userId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
+export const hasUserPurchasedProduct = async (userId: string, productId: string): Promise<boolean> => {
+    const orders = await fetchOrdersByUser(userId);
+    for (const order of orders) {
+        // A user can only review a product they have actually received.
+        if (order.status === 'Delivered' && order.items.some(item => item.product.id === productId)) {
+            return true;
+        }
+    }
+    return false;
+};
+
 // --- Messaging Functions ---
 
 export const fetchConversation = async (conversationId: string): Promise<Conversation | undefined> => {
