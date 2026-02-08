@@ -95,10 +95,14 @@ export const SellerDashboardPage: React.FC = () => {
     }
   };
 
-  const totalRevenue = MOCK_REVENUE_DATA.reduce((sum, item) => sum + item.revenue, 0);
+  // Check if the seller has any listed products to determine if they are "established"
+  const isEstablishedSeller = products.length > 0;
+  
+  // Conditionally set revenue data. New sellers see zero.
+  const revenueData = isEstablishedSeller ? MOCK_REVENUE_DATA : [];
+  const totalRevenue = revenueData.reduce((sum, item) => sum + item.revenue, 0);
+  
   const totalLikes = products.reduce((sum, product) => sum + product.likeCount, 0);
-  const primaryPayoutMethod = user?.bankDetails?.bankName ? 'Bank Transfer' : user?.mobileMoneyDetails?.provider || 'Not Set';
-
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -172,15 +176,23 @@ export const SellerDashboardPage: React.FC = () => {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200/80">
                 <h2 className="text-xl font-bold mb-4">Revenue</h2>
                 <div style={{ width: '100%', height: 250 }}>
-                   <ResponsiveContainer>
-                      <BarChart data={MOCK_REVENUE_DATA} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#ebe7e4" vertical={false} />
-                        <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} stroke="#716b65" />
-                        <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="#716b65" tickFormatter={(value) => `P${value/1000}k`} />
-                        <Tooltip cursor={{fill: 'rgba(232, 93, 59, 0.1)'}} contentStyle={{backgroundColor: '#fff', border: '1px solid #ebe7e4', borderRadius: '0.75rem'}}/>
-                        <Bar dataKey="revenue" fill="#e85d3b" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                   </ResponsiveContainer>
+                   {isEstablishedSeller ? (
+                       <ResponsiveContainer>
+                          <BarChart data={revenueData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#ebe7e4" vertical={false} />
+                            <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} stroke="#716b65" />
+                            <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="#716b65" tickFormatter={(value) => `P${value/1000}k`} />
+                            <Tooltip cursor={{fill: 'rgba(232, 93, 59, 0.1)'}} contentStyle={{backgroundColor: '#fff', border: '1px solid #ebe7e4', borderRadius: '0.75rem'}}/>
+                            <Bar dataKey="revenue" fill="#e85d3b" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                       </ResponsiveContainer>
+                   ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-center text-neutral-500">
+                            <Banknote className="w-10 h-10 mb-2 text-neutral-300" />
+                            <p className="font-medium text-sm">No revenue data yet</p>
+                            <p className="text-xs">Your sales will appear here once you make them.</p>
+                        </div>
+                   )}
                 </div>
             </div>
             <ActivityFeed />
