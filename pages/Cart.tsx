@@ -146,10 +146,10 @@ export const CartPage: React.FC = () => {
                               </div>
                               {item.size && <p className="text-xs text-neutral-600 mt-1 bg-neutral-100 px-2 py-0.5 rounded w-max font-medium">Size: {item.size}</p>}
                               <div className="mt-auto flex items-end justify-between">
-                                  <div className="flex items-center gap-3 bg-neutral-100 w-max rounded-lg p-1 mt-2">
-                                    <button onClick={() => updateCartQuantity(item.id, item.quantity - 1)} className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:bg-white rounded font-bold">-</button>
-                                    <span className="text-sm font-medium w-4 text-center">{item.quantity}</span>
-                                    <button onClick={() => updateCartQuantity(item.id, item.quantity + 1)} className="w-6 h-6 flex items-center justify-center text-neutral-600 hover:bg-white rounded font-bold">+</button>
+                                  <div className="flex items-center gap-2 bg-neutral-100 w-max rounded-xl p-1 mt-2">
+                                    <button onClick={() => updateCartQuantity(item.id, item.quantity - 1)} className="w-8 h-8 flex items-center justify-center text-neutral-600 hover:bg-white rounded-lg font-bold text-lg transition-colors">-</button>
+                                    <span className="text-sm font-semibold w-6 text-center">{item.quantity}</span>
+                                    <button onClick={() => updateCartQuantity(item.id, item.quantity + 1)} className="w-8 h-8 flex items-center justify-center text-neutral-600 hover:bg-white rounded-lg font-bold text-lg transition-colors">+</button>
                                   </div>
                                   <p className="text-md text-neutral-900 font-bold">P {item.product.price.toFixed(2)}</p>
                               </div>

@@ -207,8 +207,8 @@ export const ProductDetailsPage: React.FC = () => {
             <img src={product.imageUrls[currentImageIndex]} alt={product.title} className="w-full h-full object-cover transition-opacity duration-300" key={currentImageIndex} />
             {product.imageUrls.length > 1 && (
               <>
-                <button onClick={prevImage} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition hover:bg-white"><ChevronLeft className="w-6 h-6" /></button>
-                <button onClick={nextImage} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition hover:bg-white"><ChevronRight className="w-6 h-6" /></button>
+                <button onClick={prevImage} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md transition hover:bg-white md:opacity-50 md:group-hover:opacity-100"><ChevronLeft className="w-6 h-6" /></button>
+                <button onClick={nextImage} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md transition hover:bg-white md:opacity-50 md:group-hover:opacity-100"><ChevronRight className="w-6 h-6" /></button>
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                   {product.imageUrls.map((_, index) => (
                     <button key={index} onClick={() => setCurrentImageIndex(index)} className={`w-2.5 h-2.5 rounded-full ${currentImageIndex === index ? 'bg-white scale-110' : 'bg-white/50'} transition-all`} />

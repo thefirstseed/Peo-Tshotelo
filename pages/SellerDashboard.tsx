@@ -142,7 +142,7 @@ export const SellerDashboardPage: React.FC = () => {
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-neutral-200/80">
             <h2 className="text-xl font-bold mb-4">Recent Orders</h2>
             <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
+                <table className="w-full text-sm text-left min-w-[640px]">
                     <thead className="text-xs text-neutral-500 uppercase bg-neutral-50 rounded-t-lg">
                         <tr>
                             <th className="px-4 py-3">Order ID</th>
@@ -292,21 +292,23 @@ const StockStatus: React.FC<{ stock: number }> = ({ stock }) => {
 };
 
 const ProductRow: React.FC<ProductRowProps> = ({ product, onEditClick, onDeleteClick }) => (
-  <div className="flex items-center gap-4 p-3 hover:bg-neutral-100 rounded-xl transition-colors">
-    <img src={product.imageUrls[0]} alt={product.title} className="w-16 h-16 object-cover rounded-md bg-neutral-100 flex-shrink-0" />
-    <div className="flex-1 grid grid-cols-5 gap-4 items-center">
-        <div className="col-span-2">
-            <p className="font-semibold text-neutral-900 truncate">{product.title}</p>
-            <p className="text-xs text-neutral-500">{product.category}</p>
+  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 hover:bg-neutral-100 rounded-xl transition-colors">
+    <img src={product.imageUrls[0]} alt={product.title} className="w-20 h-20 sm:w-16 sm:h-16 object-cover rounded-md bg-neutral-100 flex-shrink-0" />
+    <div className="flex-1 flex flex-col sm:flex-row sm:items-center w-full gap-2">
+      <div className="flex-1">
+        <p className="font-semibold text-neutral-900 truncate">{product.title}</p>
+        <p className="text-xs text-neutral-500">{product.category}</p>
+      </div>
+      <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+        <div className="sm:w-32 text-left">
+          <StockStatus stock={product.stock} />
         </div>
-        <div className="col-span-1">
-             <StockStatus stock={product.stock} />
+        <p className="text-sm text-neutral-700 font-medium sm:w-24 text-left">P {product.price.toFixed(2)}</p>
+        <div className="flex items-center justify-end gap-1 sm:w-20">
+          <button onClick={onEditClick} className="p-2 text-neutral-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Edit className="w-5 h-5" /></button>
+          <button onClick={onDeleteClick} className="p-2 text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-5 h-5" /></button>
         </div>
-        <p className="text-sm text-neutral-700 font-medium">P {product.price.toFixed(2)}</p>
-        <div className="flex items-center justify-end gap-2">
-            <button onClick={onEditClick} className="p-2 text-neutral-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Edit className="w-5 h-5" /></button>
-            <button onClick={onDeleteClick} className="p-2 text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-5 h-5" /></button>
-        </div>
+      </div>
     </div>
   </div>
 );

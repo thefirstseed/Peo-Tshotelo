@@ -170,7 +170,19 @@ export const Navbar: React.FC = () => {
             })}
           </div>
 
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-3">
+            <form onSubmit={handleSearchSubmit} className="relative">
+                <input 
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search products..." 
+                    className="w-40 lg:w-56 pl-4 pr-10 py-2 bg-neutral-100 border border-transparent rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-300 focus:w-48 lg:focus:w-64"
+                />
+                <button type="submit" className="absolute inset-y-0 right-0 flex items-center pr-3" aria-label="Submit search">
+                    <Search className="w-5 h-5 text-neutral-400" />
+                </button>
+            </form>
             {user ? (
               <UserMenu />
             ) : (
@@ -182,7 +194,7 @@ export const Navbar: React.FC = () => {
               </div>
             )}
 
-            <div className="w-px h-6 bg-neutral-200 ml-2" />
+            <div className="w-px h-6 bg-neutral-200" />
             
              <button 
               onClick={() => handleNavLinkClick('/inbox')}
@@ -217,7 +229,7 @@ export const Navbar: React.FC = () => {
             </button>
           </div>
 
-          <div className="md:hidden flex items-center gap-1">
+          <div className="md:hidden flex items-center gap-2">
              <button 
                 onClick={() => handleNavLinkClick('/inbox')}
                 className="relative p-2 hover:bg-neutral-100 rounded-full transition"
