@@ -4,6 +4,7 @@ import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { navigate } from '../router';
 import { useLikes } from '../hooks/useLikes';
+import { useInbox } from '../hooks/useInbox';
 import { NAVIGATION_LINKS } from '../constants';
 import { MegaMenuColumn } from '../types';
 
@@ -93,6 +94,7 @@ const MegaMenu: React.FC<{ columns?: MegaMenuColumn[]; onClose: () => void; }> =
 export const Navbar: React.FC = () => {
   const { totalItems } = useCart();
   const { likesCount } = useLikes();
+  const { unreadCount } = useInbox();
   // FIX: Destructure `logout` from `useAuth` so it's available for the mobile menu's logout button.
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -202,6 +204,11 @@ export const Navbar: React.FC = () => {
               aria-label="Inbox"
             >
               <MessageSquare className="w-6 h-6 text-neutral-800" />
+               {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 bg-primary-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                  {unreadCount}
+                </span>
+              )}
             </button>
             <button 
               onClick={() => handleNavLinkClick('/likes')}
@@ -236,6 +243,11 @@ export const Navbar: React.FC = () => {
                 aria-label="Inbox"
               >
               <MessageSquare className="w-6 h-6 text-neutral-800" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 bg-primary-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                  {unreadCount}
+                </span>
+              )}
             </button>
              <button
                 onClick={() => handleNavLinkClick('/likes')}

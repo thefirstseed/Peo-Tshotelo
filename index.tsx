@@ -4,6 +4,7 @@ import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { LikesProvider } from './contexts/LikesContext';
+import { InboxProvider } from './contexts/InboxContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -14,11 +15,13 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <AuthProvider>
-      <CartProvider>
-        <LikesProvider>
-          <App />
-        </LikesProvider>
-      </CartProvider>
+      <InboxProvider>
+        <CartProvider>
+          <LikesProvider>
+            <App />
+          </LikesProvider>
+        </CartProvider>
+      </InboxProvider>
     </AuthProvider>
   </React.StrictMode>
 );

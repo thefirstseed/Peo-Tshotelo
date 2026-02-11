@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { fetchConversations } from '../api/api';
 import { Conversation } from '../types';
 import { ArrowLeft, MessageSquare } from 'lucide-react';
 import { navigate } from '../router';
+import { useInbox } from '../hooks/useInbox';
 
 const ConversationItem: React.FC<{ convo: Conversation; currentUserId: string; }> = ({ convo, currentUserId }) => {
     const otherParticipantId = convo.participantIds.find(id => id !== currentUserId)!;
@@ -36,16 +36,7 @@ const ConversationItem: React.FC<{ convo: Conversation; currentUserId: string; }
 
 export const InboxPage: React.FC = () => {
     const { user } = useAuth();
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        if (user) {
-            fetchConversations(user.id)
-                .then(setConversations)
-                .finally(() => setIsLoading(false));
-        }
-    }, [user]);
+    const { conversations, isLoading } = useInbox();
 
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, navigate } from '../router';
 import { useAuth } from '../hooks/useAuth';
+import { useInbox } from '../hooks/useInbox';
 import { fetchMessages, sendMessage, fetchConversation } from '../api/api';
 import { Message, Conversation } from '../types';
 import { ArrowLeft, Send, Tag } from 'lucide-react';
@@ -20,6 +21,7 @@ const MessageBubble: React.FC<{ message: Message; isMe: boolean; }> = ({ message
 export const ConversationPage: React.FC = () => {
     const { id: conversationId } = useParams();
     const { user } = useAuth();
+    const { markConversationAsRead } = useInbox();
     const [messages, setMessages] = useState<Message[]>([]);
     const [conversation, setConversation] = useState<Conversation | null>(null);
     const [newMessage, setNewMessage] = useState('');
@@ -28,6 +30,7 @@ export const ConversationPage: React.FC = () => {
 
     useEffect(() => {
         if (conversationId) {
+            markConversationAsRead(conversationId);
             setIsLoading(true);
             Promise.all([
                 fetchMessages(conversationId),
@@ -37,7 +40,7 @@ export const ConversationPage: React.FC = () => {
                 setConversation(convo || null);
             }).finally(() => setIsLoading(false));
         }
-    }, [conversationId]);
+    }, [conversationId, markConversationAsRead]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

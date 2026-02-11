@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useMemo } from 'react';
 import { CartItem, Product } from '../types';
+import { useAuth } from '../hooks/useAuth';
 
 interface CartContextType {
   cartItems: CartItem[];
@@ -15,26 +16,36 @@ export const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { user } = useAuth();
 
-  // Load cart from localStorage on initial render
+  // Load/clear cart based on user session
   useEffect(() => {
-    // TODO Backend: Load cart from GET /api/cart on mount
+    if (!user) {
+      setCartItems([]);
+      return;
+    }
+    
     try {
-      const savedCart = localStorage.getItem('kk-cart');
+      const userCartKey = `kk-cart-${user.id}`;
+      const savedCart = localStorage.getItem(userCartKey);
       if (savedCart) {
         setCartItems(JSON.parse(savedCart));
+      } else {
+        setCartItems([]); // Ensure cart is empty if no saved data for this user
       }
     } catch (error) {
-      console.error("Failed to parse cart from localStorage", error);
+      console.error(`Failed to parse cart for user ${user.id}`, error);
       setCartItems([]);
     }
-  }, []);
+  }, [user]);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes, but only for the logged-in user
   useEffect(() => {
-    // TODO Backend: Sync cart to database after each change
-    localStorage.setItem('kk-cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    if (user) {
+      const userCartKey = `kk-cart-${user.id}`;
+      localStorage.setItem(userCartKey, JSON.stringify(cartItems));
+    }
+  }, [cartItems, user]);
 
   const addToCart = (product: Product, size?: string) => {
     setCartItems(prev => {
